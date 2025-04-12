@@ -9,21 +9,14 @@ class TMDBService {
         "Authorization": "Bearer \(Secret.readAccessTokenTMDB)"
     ]
     
-    enum MovieListType: String {
-        case popular = "popular"
-        case upcoming = "upcoming"
-        case topRated = "top_rated"
-        case nowPlaying = "now_playing"
-    }
-    
     private enum Endpoint {
-        case movieList(MovieListType)
+        case movieList(MovieList)
         case movieDetails(Int)
         case genreList
         case movieVideos(Int)
     }
     
-    func loadMovies(type: MovieListType, page: Int) async throws -> [Movie] {
+    func loadMovies(type: MovieList, page: Int) async throws -> [Movie] {
         let path = generatePath(for: .movieList(type))
         let parameters: [String: String] = [
             "language": "en-US",
@@ -62,16 +55,21 @@ class TMDBService {
         return findFirstTrailer(from: videos)
     }
     
+    func isInternetAvailable() -> Bool {
+        let reachabilityManager = NetworkReachabilityManager()
+        return reachabilityManager?.isReachable ?? false
+    }
+    
     private func generatePath(for endpoint: Endpoint) -> String {
         switch endpoint {
         case .movieList(let type):
-            return "/movie/\(type.rawValue)"
+            return baseURL + "/movie/\(type.rawValue)"
         case .movieDetails(let movieID):
-            return "/movie/\(movieID)"
+            return baseURL + "/movie/\(movieID)"
         case .genreList:
-            return "/genre/movie/list"
+            return baseURL + "/genre/movie/list"
         case .movieVideos(let movieID):
-            return "/movie/\(movieID)/videos"
+            return baseURL + "/movie/\(movieID)/videos"
         }
     }
     

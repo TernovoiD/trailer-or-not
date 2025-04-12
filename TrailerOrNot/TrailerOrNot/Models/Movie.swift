@@ -26,4 +26,18 @@ struct Movie: Codable {
 		title = try values.decodeIfPresent(String.self, forKey: .title)
         rating = try values.decodeIfPresent(Double.self, forKey: .rating)
 	}
+    
+    var imageURLString: String? {
+        let basePath = "https://image.tmdb.org/t/p/w500"
+        guard let posterPath else { return nil }
+        return basePath + posterPath
+    }
+    
+    var ratingString: String {
+        if let rating {
+            return "\(rating)"
+        } else {
+            return ""
+        }
+    }
 }
