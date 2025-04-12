@@ -99,7 +99,9 @@ final class HomeViewModel {
     
     private func handle(_ error: Error) {
         state = filteredMovies.isEmpty ? .empty : .loaded
-        showError(title: "Error", message: error.localizedDescription)
+        if !offlineMode {
+            showError(title: "Error", message: error.localizedDescription)
+        }
     }
 
     private func showError(title: String, message: String) {
