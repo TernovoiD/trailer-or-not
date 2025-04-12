@@ -1,21 +1,23 @@
 import Foundation
 import Combine
 
-class HomeViewModel {
-    @Published var allMovies: [Movie] = []
+final class HomeViewModel {
+    @Published var allMovies: [Movie] = [ ]
     @Published var searchText: String = ""
-    
-    @Published var isLoading: Bool = false
-    
-    @Published var sortOption: MovieList = .popular
-
-    @Published var errorTitle: String?
-    @Published var errorMessage: String?
     @Published var error: Bool = false
+    @Published var state: State = .loading
+    
+    var genres: [Genre] = [ ]
+    var sortOption: MovieList = .popular
+    var errorTitle: String?
+    var errorMessage: String?
+    var currentPage: Int = 1
+    var offlineMode = false
 
     private var cancellables = Set<AnyCancellable>()
     private let moviesAPI = TMDBService()
-    private var currentPage: Int = 1
+    
+    enum State { case loading, loaded, empty }
     
     var filteredMovies: [Movie] {
         if searchText.isEmpty { allMovies } else {
@@ -27,7 +29,11 @@ class HomeViewModel {
     }
     
     init() {
-        Task { await loadMovies(for: sortOption, page: currentPage) }
+        Task {
+            checkConnection()
+            await loadGenres()
+            changeSortOption(to: .popular)
+        }
     }
     
     func loadNextPage() {
@@ -38,17 +44,59 @@ class HomeViewModel {
     func changeSortOption(to option: MovieList) {
         currentPage = 1
         sortOption = option
-        Task { await loadMovies(for: sortOption, page: currentPage) }
+        allMovies = [ ]
+        Task {
+            state = .loading
+            await loadMovies(for: sortOption, page: currentPage)
+            state = filteredMovies.isEmpty ? .empty : .loaded
+        }
     }
     
-    @MainActor
+    func findMovie(withText textToSearch: String) {
+        searchText = textToSearch
+        if state == .loading { return }
+        state = filteredMovies.isEmpty ? .empty : .loaded
+    }
+    
+    func findGenres(from genreIDs: [Int]) -> String {
+        var genreString = [String]()
+        for genreId in genreIDs {
+            if let genre = genres.first(where: { $0.id == genreId }) {
+                if let genreName = genre.name { genreString.append(genreName) }
+            }
+        }
+        return genreString.joined(separator: ", ")
+    }
+    
+    private func loadGenres() async {
+        do {
+            let allGenres = try await moviesAPI.loadGenres()
+            self.genres = allGenres
+        } catch let error { handle(error) }
+    }
+    
     private func loadMovies(for option: MovieList, page: Int) async {
         do {
             let newMovies = try await moviesAPI.loadMovies(type: option, page: page)
             self.allMovies.append(contentsOf: newMovies)
-        } catch let error {
-            showError(title: "Error", message: error.localizedDescription)
+        } catch let error { handle(error) }
+    }
+    
+    private func checkConnection() {
+        let isConnected = moviesAPI.isInternetAvailable()
+        if isConnected {
+            offlineMode = false
+        } else {
+            if !offlineMode {
+                showError(title: "Network error", message: "You are offline. Please, enable your Wi-Fi or connect using cellular data.")
+            }
+            offlineMode = true
         }
+    }
+    
+    private func handle(_ error: Error) {
+        state = filteredMovies.isEmpty ? .empty : .loaded
+        showError(title: "Error", message: error.localizedDescription)
     }
 
     private func showError(title: String, message: String) {

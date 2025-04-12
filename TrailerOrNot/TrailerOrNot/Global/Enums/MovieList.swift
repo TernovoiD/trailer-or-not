@@ -1,4 +1,4 @@
-enum MovieList: String {
+enum MovieList: String, CaseIterable {
     case popular = "popular"
     case upcoming = "upcoming"
     case topRated = "top_rated"

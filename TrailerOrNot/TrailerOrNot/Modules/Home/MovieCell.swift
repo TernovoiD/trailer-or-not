@@ -1,8 +1,9 @@
 import UIKit
 
-class MovieCell: UITableViewCell {
+final class MovieCell: UITableViewCell {
+    let movieImageView = UIImageView()
+    
     private let cellBackground = UIView()
-    private let movieImageView = UIImageView()
     private let tintView = UIView()
     private let titleLabel = UILabel()
     private let genreLabel = UILabel()
@@ -23,8 +24,8 @@ class MovieCell: UITableViewCell {
         cellBackground.translatesAutoresizingMaskIntoConstraints = false
         cellBackground.backgroundColor = .systemBackground
         cellBackground.layer.cornerRadius = 35
-        cellBackground.layer.shadowColor = UIColor.gray.cgColor
-        cellBackground.layer.shadowOpacity = 0.75
+        cellBackground.layer.shadowColor = UIColor.black.cgColor
+        cellBackground.layer.shadowOpacity = 0.5
         cellBackground.layer.shadowOffset = .zero
         cellBackground.layer.shadowRadius = 7
         contentView.addSubview(cellBackground)
@@ -43,11 +44,13 @@ class MovieCell: UITableViewCell {
         
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.font = UIFont.boldSystemFont(ofSize: 24)
+        titleLabel.numberOfLines = 2
         titleLabel.textColor = .white
         tintView.addSubview(titleLabel)
         
         genreLabel.translatesAutoresizingMaskIntoConstraints = false
         genreLabel.font = UIFont.systemFont(ofSize: 18)
+        genreLabel.numberOfLines = 2
         genreLabel.textColor = .white
         tintView.addSubview(genreLabel)
         
@@ -74,9 +77,11 @@ class MovieCell: UITableViewCell {
             
             titleLabel.topAnchor.constraint(equalTo: tintView.topAnchor, constant: 30),
             titleLabel.leadingAnchor.constraint(equalTo: tintView.leadingAnchor, constant: 20),
+            titleLabel.trailingAnchor.constraint(equalTo: tintView.trailingAnchor, constant: -20),
             
             genreLabel.bottomAnchor.constraint(equalTo: tintView.bottomAnchor, constant: -30),
             genreLabel.leadingAnchor.constraint(equalTo: tintView.leadingAnchor, constant: 20),
+            genreLabel.trailingAnchor.constraint(equalTo: tintView.trailingAnchor, constant: -100),
             
             ratingLabel.bottomAnchor.constraint(equalTo: tintView.bottomAnchor, constant: -30),
             ratingLabel.trailingAnchor.constraint(equalTo: tintView.trailingAnchor, constant: -20),

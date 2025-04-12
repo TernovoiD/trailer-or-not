@@ -1,6 +1,6 @@
 import UIKit
 
-class MovieDetailsViewController: UIViewController {
+final class MovieDetailsViewController: UIViewController {
     
     var movieTitle: String?
 

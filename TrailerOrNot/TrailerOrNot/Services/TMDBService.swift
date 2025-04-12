@@ -55,6 +55,11 @@ class TMDBService {
         return findFirstTrailer(from: videos)
     }
     
+    func isInternetAvailable() -> Bool {
+        let reachabilityManager = NetworkReachabilityManager()
+        return reachabilityManager?.isReachable ?? false
+    }
+    
     private func generatePath(for endpoint: Endpoint) -> String {
         switch endpoint {
         case .movieList(let type):
