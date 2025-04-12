@@ -6,11 +6,11 @@ final class HomeViewController: UIViewController {
     private var subscriptions = Set<AnyCancellable>()
     private var viewModel = HomeViewModel()
 
-    let searchBar = UISearchBar()
-    let tableView = UITableView()
-    let refreshControl = UIRefreshControl()
-    let loadingIndicator = UIActivityIndicatorView()
-    let emptyDataLabel = UILabel()
+    private let searchBar = UISearchBar()
+    private let tableView = UITableView()
+    private let refreshControl = UIRefreshControl()
+    private let loadingIndicator = UIActivityIndicatorView()
+    private let emptyDataLabel = UILabel()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -108,7 +108,7 @@ final class HomeViewController: UIViewController {
 
 
 //MARK: - Methods
-extension HomeViewController {
+private extension HomeViewController {
     func handle(_ state: HomeViewModel.State) {
         switch state {
         case .loading:
@@ -191,10 +191,11 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         let movie = viewModel.filteredMovies[indexPath.row]
         let genres = viewModel.findGenres(from: movie.genreIDs ?? [ ])
         cell.configure(title: movie.title ?? "", genre: genres, rating: movie.ratingString)
-//        if let path = movie.imageURLString,
-//           let url = URL(string: path) {
-//            cell.movieImageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"))
-//        }
+        if let path = movie.imageURLString,
+           let url = URL(string: path) {
+            let options: KingfisherOptionsInfo = viewModel.offlineMode ? [.onlyFromCache] : [ ]
+            cell.movieImageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"), options: options)
+        }
         return cell
     }
 
@@ -209,9 +210,10 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         let visibleCells = tableView.visibleCells
         guard let lastVisibleCell = visibleCells.last else { return }
         let lastIndexPath = tableView.indexPath(for: lastVisibleCell)
-        if let lastIndexPath, lastIndexPath.row >= viewModel.filteredMovies.count - 10 {
-            if !viewModel.allPagesLoaded { viewModel.loadNextPage() }
-        }
+        if let lastIndexPath,
+           lastIndexPath.row >= viewModel.filteredMovies.count - 10,
+           !viewModel.allPagesLoaded,
+           viewModel.state != .loading { viewModel.loadNextPage() }
     }
 }
 
