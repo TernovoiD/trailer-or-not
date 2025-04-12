@@ -191,10 +191,10 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         let movie = viewModel.filteredMovies[indexPath.row]
         let genres = viewModel.findGenres(from: movie.genreIDs ?? [ ])
         cell.configure(title: movie.title ?? "", genre: genres, rating: movie.ratingString)
-        if let path = movie.imageURLString,
-           let url = URL(string: path) {
-            cell.movieImageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"))
-        }
+//        if let path = movie.imageURLString,
+//           let url = URL(string: path) {
+//            cell.movieImageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"))
+//        }
         return cell
     }
 
@@ -209,9 +209,8 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         let visibleCells = tableView.visibleCells
         guard let lastVisibleCell = visibleCells.last else { return }
         let lastIndexPath = tableView.indexPath(for: lastVisibleCell)
-        let updateIndex = viewModel.offlineMode ? 1 : 10
-        if let lastIndexPath, lastIndexPath.row >= viewModel.filteredMovies.count - updateIndex {
-            viewModel.loadNextPage()
+        if let lastIndexPath, lastIndexPath.row >= viewModel.filteredMovies.count - 10 {
+            if !viewModel.allPagesLoaded { viewModel.loadNextPage() }
         }
     }
 }

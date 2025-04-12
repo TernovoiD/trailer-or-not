@@ -12,6 +12,7 @@ final class HomeViewModel {
     var errorTitle: String?
     var errorMessage: String?
     var currentPage: Int = 1
+    var allPagesLoaded: Bool = false
     var offlineMode = false
 
     private var cancellables = Set<AnyCancellable>()
@@ -30,7 +31,6 @@ final class HomeViewModel {
     
     init() {
         Task {
-            checkConnection()
             await loadGenres()
             changeSortOption(to: .popular)
         }
@@ -38,16 +38,22 @@ final class HomeViewModel {
     
     func loadNextPage() {
         currentPage += 1
-        Task { await loadMovies(for: sortOption, page: currentPage) }
+        Task {
+            let newMovies = await loadMovies(for: sortOption, page: currentPage)
+            if newMovies.count == 0 { allPagesLoaded = true } else {
+                allMovies.append(contentsOf: newMovies)
+            }
+        }
     }
     
     func changeSortOption(to option: MovieList) {
+        checkConnection()
         currentPage = 1
+        allPagesLoaded = false
         sortOption = option
-        allMovies = [ ]
         Task {
             state = .loading
-            await loadMovies(for: sortOption, page: currentPage)
+            allMovies = await loadMovies(for: sortOption, page: currentPage)
             state = filteredMovies.isEmpty ? .empty : .loaded
         }
     }
@@ -75,23 +81,20 @@ final class HomeViewModel {
         } catch let error { handle(error) }
     }
     
-    private func loadMovies(for option: MovieList, page: Int) async {
+    private func loadMovies(for option: MovieList, page: Int) async -> [Movie] {
+        var movies = [Movie]()
         do {
-            let newMovies = try await moviesAPI.loadMovies(type: option, page: page)
-            self.allMovies.append(contentsOf: newMovies)
+            movies = try await moviesAPI.loadMovies(type: option, page: page)
         } catch let error { handle(error) }
+        return movies
     }
     
     private func checkConnection() {
         let isConnected = moviesAPI.isInternetAvailable()
-        if isConnected {
-            offlineMode = false
-        } else {
-            if !offlineMode {
-                showError(title: "Network error", message: "You are offline. Please, enable your Wi-Fi or connect using cellular data.")
-            }
-            offlineMode = true
+        if !isConnected && !offlineMode {
+            showError(title: "Network error", message: "You are offline. Please, enable your Wi-Fi or connect using cellular data.")
         }
+        offlineMode = !isConnected
     }
     
     private func handle(_ error: Error) {
