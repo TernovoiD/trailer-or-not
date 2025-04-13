@@ -24,6 +24,7 @@ final class HomeViewController: UIViewController {
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
         title = "Popular movies"
+        navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Sort", style: .plain, target: self, action: #selector(showOptions))
 
         searchBar.translatesAutoresizingMaskIntoConstraints = false
@@ -102,6 +103,13 @@ final class HomeViewController: UIViewController {
                 self?.showErrorAlert()
             }
             .store(in: &subscriptions)
+        
+        viewModel.$movieDetails
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] details in
+                if let details { self?.openDetailView(for: details) }
+            }
+            .store(in: &subscriptions)
     }
 }
 
@@ -128,6 +136,11 @@ private extension HomeViewController {
                 self.refreshControl.endRefreshing()
             }
         }
+    }
+    
+    func openDetailView(for movieDetails: MovieDetails.WithTrailer) {
+        let detailsVC = MovieViewController(details: movieDetails)
+        navigationController?.pushViewController(detailsVC, animated: true)
     }
     
     func showErrorAlert() {
@@ -200,9 +213,9 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let detailsVC = MovieDetailsViewController()
-        detailsVC.movieTitle = viewModel.filteredMovies[indexPath.row].title ?? "Unknown"
-        navigationController?.pushViewController(detailsVC, animated: true)
+        if let movieID = viewModel.filteredMovies[indexPath.row].id {
+            viewModel.openMovie(withID: movieID)
+        }
     }
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {

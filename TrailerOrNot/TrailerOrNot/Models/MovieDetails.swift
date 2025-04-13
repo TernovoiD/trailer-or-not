@@ -32,4 +32,15 @@ struct MovieDetails: Codable {
 		title = try values.decodeIfPresent(String.self, forKey: .title)
         rating = try values.decodeIfPresent(Double.self, forKey: .rating)
 	}
+    
+    struct WithTrailer {
+        let movieDetails: MovieDetails
+        let trailerPath: String?
+    }
+    
+    var imageURLString: String? {
+        let basePath = "https://image.tmdb.org/t/p/w500"
+        guard let posterPath else { return nil }
+        return basePath + posterPath
+    }
 }
