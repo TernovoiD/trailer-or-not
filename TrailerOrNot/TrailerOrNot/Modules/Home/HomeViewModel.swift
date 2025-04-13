@@ -3,6 +3,7 @@ import Combine
 
 final class HomeViewModel {
     @Published var allMovies: [Movie] = [ ]
+    @Published var movieDetails: MovieDetails.WithTrailer?
     @Published var searchText: String = ""
     @Published var error: Bool = false
     @Published var state: State = .loading
@@ -58,6 +59,19 @@ final class HomeViewModel {
         }
     }
     
+    func openMovie(withID movieID: Int) {
+        checkConnection()
+        if offlineMode {
+            showError(message: "You are offline. Please, enable your Wi-Fi or connect using cellular data.")
+            return
+        }
+        Task {
+            state = .loading
+            movieDetails = await loadDetails(for: movieID)
+            state = filteredMovies.isEmpty ? .empty : .loaded
+        }
+    }
+    
     func findMovie(withText textToSearch: String) {
         searchText = textToSearch
         if state == .loading { return }
@@ -82,17 +96,31 @@ final class HomeViewModel {
     }
     
     private func loadMovies(for option: MovieList, page: Int) async -> [Movie] {
-        var movies = [Movie]()
         do {
-            movies = try await moviesAPI.loadMovies(type: option, page: page)
-        } catch let error { handle(error) }
-        return movies
+            return try await moviesAPI.loadMovies(type: option, page: page)
+        } catch let error {
+            handle(error)
+            return [ ]
+        }
+    }
+    
+    private func loadDetails(for movieID: Int) async -> MovieDetails.WithTrailer? {
+        do {
+            let details = try await moviesAPI.loadMovieDetails(forID: movieID)
+            let trailerPath = try await moviesAPI.trailerPath(forID: movieID)
+            if let details {
+                return MovieDetails.WithTrailer(movieDetails: details, trailerPath: trailerPath)
+            } else { return nil }
+        } catch let error {
+            handle(error)
+            return nil
+        }
     }
     
     private func checkConnection() {
         let isConnected = moviesAPI.isInternetAvailable()
         if !isConnected && !offlineMode {
-            showError(title: "Network error", message: "You are offline. Please, enable your Wi-Fi or connect using cellular data.")
+            showError(message: "You are offline. Please, enable your Wi-Fi or connect using cellular data.")
         }
         offlineMode = !isConnected
     }
@@ -100,11 +128,11 @@ final class HomeViewModel {
     private func handle(_ error: Error) {
         state = filteredMovies.isEmpty ? .empty : .loaded
         if !offlineMode {
-            showError(title: "Error", message: error.localizedDescription)
+            showError(message: error.localizedDescription)
         }
     }
 
-    private func showError(title: String, message: String) {
+    private func showError(title: String? = "Error", message: String) {
         self.errorTitle = title
         self.errorMessage = message
         self.error = true

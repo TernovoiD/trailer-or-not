@@ -74,8 +74,13 @@ class TMDBService {
     }
     
     private func findFirstTrailer(from videos: [Video]) -> String? {
+        let baseURLStringYT = "https://www.youtube.com/watch?v="
         let trailerVideo = videos.first(where: { $0.type?.lowercased() == "trailer" })
-        return trailerVideo?.key
+        if let key = trailerVideo?.key,
+           let website = trailerVideo?.site,
+           website.lowercased() == "youtube" {
+            return baseURLStringYT + key
+        } else { return nil }
     }
 }
 
