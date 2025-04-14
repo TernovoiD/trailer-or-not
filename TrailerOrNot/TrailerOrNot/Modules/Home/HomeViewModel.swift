@@ -1,35 +1,25 @@
 import Foundation
 import Combine
 
+@MainActor
 final class HomeViewModel {
     private let moviesAPI: TMDBService
     
-    @Published var allMovies: [Movie] = [ ]
-    @Published var movieDetails: MovieDetails.WithTrailer?
-    @Published var searchText: String = ""
     @Published var error: Bool = false
     @Published var state: State = .loading
+    @Published var searchText: String = ""
+    @Published var movieDetails: MovieDetails.WithTrailer?
     
-    var genres: [Genre] = [ ]
-    var sortOption: MovieList = .popular
-    var errorTitle: String?
-    var errorMessage: String?
-    var currentPage: Int = 1
-    var allPagesLoaded: Bool = false
-    var offlineMode = false
-
-    private var cancellables = Set<AnyCancellable>()
+    private var movies: [Movie] = [ ]
+    private var genres: [Genre] = [ ]
+    private(set) var sortOption: MovieList = .popular
+    private(set) var errorTitle: String?
+    private(set) var errorMessage: String?
+    private(set) var offlineMode = false
+    private(set) var currentPage = 1
+    private var isLastPage = false
     
-    enum State { case loading, loaded, empty }
-    
-    var filteredMovies: [Movie] {
-        if searchText.isEmpty { allMovies } else {
-            allMovies.filter({
-                guard let movieTitle = $0.title else { return false }
-                return movieTitle.lowercased().contains(searchText.lowercased())
-            })
-        }
-    }
+    enum State { case loading, refreshing, ready, emptyData, emptySearch }
     
     init(moviesAPI: TMDBService) {
         self.moviesAPI = moviesAPI
@@ -39,45 +29,55 @@ final class HomeViewModel {
         }
     }
     
+    var moviesToShow: [Movie] { searchText.isEmpty ? movies : searchedMovies }
+    
+    private var searchedMovies: [Movie] {
+        movies.filter({ $0.titleContains(searchText) })
+    }
+    
     func loadNextPage() {
+        if isLastPage { return }
         currentPage += 1
         Task {
             let newMovies = await loadMovies(for: sortOption, page: currentPage)
-            if newMovies.count == 0 { allPagesLoaded = true } else {
-                allMovies.append(contentsOf: newMovies)
+            if newMovies.count == 0 { isLastPage = true } else {
+                movies.append(contentsOf: newMovies)
+                finishLoadingState()
             }
         }
     }
     
-    func changeSortOption(to option: MovieList) {
-        checkConnection()
+    func changeSortOption(to option: MovieList, refresh: Bool = false) {
+        verifyConnection()
         currentPage = 1
-        allPagesLoaded = false
+        isLastPage = false
         sortOption = option
         Task {
-            state = .loading
-            allMovies = await loadMovies(for: sortOption, page: currentPage)
-            state = filteredMovies.isEmpty ? .empty : .loaded
+            startLoadingState(refresh: refresh)
+            await Task.delay()
+            movies = await loadMovies(for: sortOption, page: currentPage)
+            finishLoadingState()
         }
     }
     
     func openMovie(withID movieID: Int) {
-        checkConnection()
+        verifyConnection()
         if offlineMode {
             showError(message: LocalizedText.Error.network)
             return
         }
         Task {
-            state = .loading
-            movieDetails = await loadDetails(for: movieID)
-            state = filteredMovies.isEmpty ? .empty : .loaded
+            startLoadingState()
+            await Task.delay()
+            let details = await loadDetails(for: movieID)
+            finishLoadingState()
+            self.movieDetails = details
         }
     }
     
     func findMovie(withText textToSearch: String) {
         searchText = textToSearch
-        if state == .loading { return }
-        state = filteredMovies.isEmpty ? .empty : .loaded
+        if state == .loading { return } else { finishLoadingState() }
     }
     
     func findGenres(from genreIDs: [Int]) -> String {
@@ -89,15 +89,17 @@ final class HomeViewModel {
         }
         return genreString.joined(separator: ", ")
     }
-    
-    private func loadGenres() async {
-        do {
-            let allGenres = try await moviesAPI.loadGenres()
-            self.genres = allGenres
-        } catch let error { handle(error) }
+}
+
+
+//MARK: - Private methods
+private extension HomeViewModel {
+    func loadGenres() async {
+        guard let loadedGenres = try? await moviesAPI.loadGenres() else { return }
+        self.genres = loadedGenres
     }
     
-    private func loadMovies(for option: MovieList, page: Int) async -> [Movie] {
+    func loadMovies(for option: MovieList, page: Int) async -> [Movie] {
         do {
             return try await moviesAPI.loadMovies(type: option, page: page)
         } catch let error {
@@ -106,7 +108,7 @@ final class HomeViewModel {
         }
     }
     
-    private func loadDetails(for movieID: Int) async -> MovieDetails.WithTrailer? {
+    func loadDetails(for movieID: Int) async -> MovieDetails.WithTrailer? {
         do {
             let details = try await moviesAPI.loadMovieDetails(forID: movieID)
             let trailerPath = try await moviesAPI.trailerPath(forID: movieID)
@@ -119,7 +121,7 @@ final class HomeViewModel {
         }
     }
     
-    private func checkConnection() {
+    func verifyConnection() {
         let isConnected = moviesAPI.isInternetAvailable()
         if !isConnected && !offlineMode {
             showError(message: LocalizedText.Error.network)
@@ -127,16 +129,22 @@ final class HomeViewModel {
         offlineMode = !isConnected
     }
     
-    private func handle(_ error: Error) {
-        state = filteredMovies.isEmpty ? .empty : .loaded
-        if !offlineMode {
-            showError(message: error.localizedDescription)
-        }
+    func handle(_ error: Error) {
+        finishLoadingState()
+        if !offlineMode { showError(message: error.localizedDescription) }
     }
 
-    private func showError(title: String? = LocalizedText.Error.title, message: String) {
+    func showError(title: String? = LocalizedText.Error.title, message: String) {
         self.errorTitle = title
         self.errorMessage = message
         self.error = true
+    }
+    
+    private func startLoadingState(refresh: Bool = false) {
+        state = refresh ? .refreshing : .loading
+    }
+    
+    private func finishLoadingState() {
+        state = moviesToShow.isEmpty ? (movies.isEmpty ? .emptyData : .emptySearch) : .ready
     }
 }
