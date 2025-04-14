@@ -1,0 +1,160 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "An unknown error occurred." : {
+      "comment" : "Unknown error",
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сталася невідома помилка :("
+          }
+        }
+      }
+    },
+    "Cancel" : {
+      "comment" : "Cancel button",
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відмінити"
+          }
+        }
+      }
+    },
+    "Choose Sorting Preference" : {
+      "comment" : "Sort title",
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оберіть спосіб сортування"
+          }
+        }
+      }
+    },
+    "Error" : {
+      "comment" : "Error title",
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Помилка"
+          }
+        }
+      }
+    },
+    "Now playing" : {
+      "comment" : "Title: Now playing",
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Зараз в Кіно"
+          }
+        }
+      }
+    },
+    "OK" : {
+      "comment" : "OK button",
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добре"
+          }
+        }
+      }
+    },
+    "Oops, no movies found..." : {
+      "comment" : "Empty search lable",
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ой, фільмів не знайдено…"
+          }
+        }
+      }
+    },
+    "Popular" : {
+      "comment" : "Title: Popular",
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Популярні"
+          }
+        }
+      }
+    },
+    "Search" : {
+      "comment" : "Search movies",
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пошук"
+          }
+        }
+      }
+    },
+    "Select your preferred option to customize how movies are displayed. Adjust your viewing experience to highlight the content you want to see." : {
+      "comment" : "Sort description",
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оберіть бажаний варіант, щоб налаштувати, як відображаються фільми. Налаштуйте свій перегляд, щоб підкреслити той контент, який ви хочете бачити."
+          }
+        }
+      }
+    },
+    "Sort" : {
+      "comment" : "Sort movies button",
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сортувати"
+          }
+        }
+      }
+    },
+    "Top rated" : {
+      "comment" : "Title: Top rated",
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Топ рейтинг"
+          }
+        }
+      }
+    },
+    "Upcoming" : {
+      "comment" : "Title: Upcoming",
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скоро в Кіно"
+          }
+        }
+      }
+    },
+    "You are offline. Please, enable your Wi-Fi or connect using cellular data." : {
+      "comment" : "Network error",
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ви в режимі офлайн. Будь ласка, увімкніть Wi-Fi або підключіться за допомогою мобільних даних."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

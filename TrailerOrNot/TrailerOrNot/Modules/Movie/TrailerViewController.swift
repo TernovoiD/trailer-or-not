@@ -2,7 +2,6 @@ import UIKit
 import WebKit
 
 class TrailerViewController: UIViewController {
-    
     let trailerPath: String
     var webView = WKWebView()
 
@@ -24,6 +23,7 @@ class TrailerViewController: UIViewController {
     private func setupWebView() {
         view.backgroundColor = .systemBackground
         webView.translatesAutoresizingMaskIntoConstraints = false
+        webView.allowsLinkPreview = true
         view.addSubview(webView)
 
         NSLayoutConstraint.activate([
@@ -39,7 +39,7 @@ class TrailerViewController: UIViewController {
             let request = URLRequest(url: url)
             webView.load(request)
         } else {
-            print("Invalid URL")
+            dismiss(animated: true, completion: nil)
         }
     }
 }

@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		812465CF2DA8F61C00E916CA /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 812465CE2DA8F61C00E916CA /* Alamofire */; };
 		812465D22DA8F65600E916CA /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 812465D12DA8F65600E916CA /* Kingfisher */; };
-		81B380BA2DABFCB30027CCC5 /* YouTubeiOSPlayerHelper in Frameworks */ = {isa = PBXBuildFile; productRef = 81B380B92DABFCB30027CCC5 /* YouTubeiOSPlayerHelper */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,7 +43,6 @@
 			files = (
 				812465D22DA8F65600E916CA /* Kingfisher in Frameworks */,
 				812465CF2DA8F61C00E916CA /* Alamofire in Frameworks */,
-				81B380BA2DABFCB30027CCC5 /* YouTubeiOSPlayerHelper in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -89,7 +87,6 @@
 			packageProductDependencies = (
 				812465CE2DA8F61C00E916CA /* Alamofire */,
 				812465D12DA8F65600E916CA /* Kingfisher */,
-				81B380B92DABFCB30027CCC5 /* YouTubeiOSPlayerHelper */,
 			);
 			productName = TrailerOrNot;
 			productReference = 812463D92DA8F04E00E916CA /* TrailerOrNot.app */;
@@ -116,13 +113,13 @@
 			knownRegions = (
 				en,
 				Base,
+				uk,
 			);
 			mainGroup = 812463D02DA8F04E00E916CA;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				812465CD2DA8F61C00E916CA /* XCRemoteSwiftPackageReference "Alamofire" */,
 				812465D02DA8F65600E916CA /* XCRemoteSwiftPackageReference "Kingfisher" */,
-				81B380B82DABFCB30027CCC5 /* XCRemoteSwiftPackageReference "youtube-ios-player-helper" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 812463DA2DA8F04E00E916CA /* Products */;
@@ -228,6 +225,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -282,6 +280,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -291,6 +290,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -338,6 +338,7 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -382,14 +383,6 @@
 				minimumVersion = 8.3.2;
 			};
 		};
-		81B380B82DABFCB30027CCC5 /* XCRemoteSwiftPackageReference "youtube-ios-player-helper" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/youtube/youtube-ios-player-helper";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.4;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -402,11 +395,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 812465D02DA8F65600E916CA /* XCRemoteSwiftPackageReference "Kingfisher" */;
 			productName = Kingfisher;
-		};
-		81B380B92DABFCB30027CCC5 /* YouTubeiOSPlayerHelper */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 81B380B82DABFCB30027CCC5 /* XCRemoteSwiftPackageReference "youtube-ios-player-helper" */;
-			productName = YouTubeiOSPlayerHelper;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

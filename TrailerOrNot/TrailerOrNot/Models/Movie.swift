@@ -27,6 +27,17 @@ struct Movie: Codable {
         rating = try values.decodeIfPresent(Double.self, forKey: .rating)
 	}
     
+    var fullTitle: String {
+        if let title {
+            if let releaseDate = releaseDate {
+                let year = String(releaseDate.prefix(4))
+                return [title, year].joined(separator: ", ")
+            } else {
+                return title
+            }
+        } else { return "" }
+    }
+    
     var imageURLString: String? {
         let basePath = "https://image.tmdb.org/t/p/w500"
         guard let posterPath else { return nil }
