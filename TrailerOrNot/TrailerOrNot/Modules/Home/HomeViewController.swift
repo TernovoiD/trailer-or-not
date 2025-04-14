@@ -1,6 +1,5 @@
 import UIKit
 import Combine
-import Kingfisher
 
 final class HomeViewController: UIViewController {
     private var subscriptions = Set<AnyCancellable>()
@@ -9,11 +8,16 @@ final class HomeViewController: UIViewController {
     private let searchBar = UISearchBar()
     private let tableView = UITableView()
     private let refreshControl = UIRefreshControl()
-    private let loadingIndicator = UIActivityIndicatorView()
     private let emptyDataLabel = UILabel()
+    private let loadingIndicator = LoadingCircle()
+    
+    private let tableManager: HomeTableViewManager
+    private let searchBarManager: HomeSearchBarManager
     
     init(movieService: TMDBService) {
         let viewModel = HomeViewModel(moviesAPI: movieService)
+        self.tableManager = HomeTableViewManager(viewModel: viewModel)
+        self.searchBarManager = HomeSearchBarManager(viewModel: viewModel)
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
@@ -27,7 +31,7 @@ final class HomeViewController: UIViewController {
         setupUI()
         bindViewModel()
     }
-
+    
     private func setupUI() {
         view.backgroundColor = .systemBackground
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
@@ -36,78 +40,59 @@ final class HomeViewController: UIViewController {
         title = MovieList.popular.title
         navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: LocalizedText.sortButtonText, style: .plain, target: self, action: #selector(showOptions))
-
-        searchBar.translatesAutoresizingMaskIntoConstraints = false
-        searchBar.delegate = self
-        searchBar.placeholder = LocalizedText.searchBarPlaceholder
-        view.addSubview(searchBar)
-
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        tableView.delegate = self
-        tableView.dataSource = self
-        tableView.register(MovieCell.self, forCellReuseIdentifier: "MovieCell")
-        tableView.separatorStyle = .none
-        tableView.rowHeight = 240
         
+        setupUITable()
+        setupSearchBar()
+        setupEmptyLabel()
+        setupLoadingIndicator()
+        setupConstraints()
+    }
+    
+    private func setupUITable() {
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        tableManager.configureTableView(tableView)
+        tableManager.scrollAction = paginationCheck
         refreshControl.addTarget(self, action: #selector(refreshData), for: .valueChanged)
         tableView.refreshControl = refreshControl
         view.addSubview(tableView)
-        
-        loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
-        loadingIndicator.style = .large
-        loadingIndicator.center = view.center
-        view.addSubview(loadingIndicator)
-        
+    }
+    
+    private func setupSearchBar() {
+        searchBar.translatesAutoresizingMaskIntoConstraints = false
+        searchBar.delegate = searchBarManager
+        searchBar.placeholder = LocalizedText.searchBarPlaceholder
+        view.addSubview(searchBar)
+    }
+    
+    private func setupEmptyLabel() {
         emptyDataLabel.translatesAutoresizingMaskIntoConstraints = false
-        emptyDataLabel.text = LocalizedText.emptySearchLable
+        emptyDataLabel.text = LocalizedText.Error.emptyData
         emptyDataLabel.textAlignment = .center
         emptyDataLabel.isHidden = true
         view.addSubview(emptyDataLabel)
-
-        NSLayoutConstraint.activate([
-            searchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-
-            tableView.topAnchor.constraint(equalTo: searchBar.bottomAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            
-            loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            
-            emptyDataLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            emptyDataLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            emptyDataLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            emptyDataLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
-        ])
+    }
+    
+    
+    private func setupLoadingIndicator() {
+        loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
+        loadingIndicator.startAnimating()
+        view.addSubview(loadingIndicator)
     }
     
     private func bindViewModel() {
-        viewModel.$allMovies
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] movies in
-                self?.updateTable()
-            }
-            .store(in: &subscriptions)
-        
         viewModel.$searchText
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] movies in
                 self?.updateTable()
             }
             .store(in: &subscriptions)
         
         viewModel.$state
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] state in
-                self?.handle(state)
+                self?.updateUI(state)
             }
             .store(in: &subscriptions)
         
         viewModel.$error
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] errorOccurred in
                 guard errorOccurred else { return }
                 self?.showErrorAlert()
@@ -115,45 +100,95 @@ final class HomeViewController: UIViewController {
             .store(in: &subscriptions)
         
         viewModel.$movieDetails
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] details in
                 if let details { self?.openDetailView(for: details) }
             }
             .store(in: &subscriptions)
     }
-}
-
-
-
-//MARK: - Methods
-private extension HomeViewController {
-    func handle(_ state: HomeViewModel.State) {
+    
+    private func setupConstraints() {
+        NSLayoutConstraint.activate([
+            searchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            
+            tableView.topAnchor.constraint(equalTo: searchBar.bottomAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            emptyDataLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            emptyDataLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            emptyDataLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            emptyDataLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            
+            loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            loadingIndicator.heightAnchor.constraint(equalToConstant: 200),
+            loadingIndicator.widthAnchor.constraint(equalToConstant: 200),
+        ])
+    }
+    
+    private func updateUI(_ state: HomeViewModel.State) {
         switch state {
         case .loading:
-            loadingIndicator.startAnimating()
-            tableView.isHidden = true
-            emptyDataLabel.isHidden = true
-        case .empty:
-            loadingIndicator.stopAnimating()
-            tableView.isHidden = true
-            emptyDataLabel.isHidden = false
-        case .loaded:
-            loadingIndicator.stopAnimating()
-            tableView.isHidden = false
-            emptyDataLabel.isHidden = true
-            tableView.reloadData()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                self.refreshControl.endRefreshing()
-            }
+            loadingUI(true)
+        case .refreshing:
+            loadingUI(false)
+        case .ready:
+            updateTable()
+            loadingUI(false)
+            showTable()
+            refreshControl.endRefreshing()
+        case .emptyData:
+            loadingUI(false)
+            updateTable()
+            showEmptySign(with: LocalizedText.Error.emptyData)
+            refreshControl.endRefreshing()
+        case .emptySearch:
+            loadingUI(false)
+            updateTable()
+            showEmptySign(with: LocalizedText.Error.emptySearch)
+            refreshControl.endRefreshing()
         }
     }
     
-    func openDetailView(for movieDetails: MovieDetails.WithTrailer) {
+    private func loadingUI(_ inProgress: Bool) {
+        if inProgress {
+            loadingIndicator.startAnimating()
+            loadingIndicator.isHidden = false
+        } else {
+            loadingIndicator.stopAnimating()
+            loadingIndicator.isHidden = true
+        }
+    }
+    
+    private func showTable() {
+        tableView.isHidden = false
+        emptyDataLabel.isHidden = true
+    }
+    
+    private func showEmptySign(with text: String) {
+        tableView.isHidden = true
+        emptyDataLabel.text = text
+        emptyDataLabel.isHidden = false
+    }
+    
+    private func paginationCheck() {
+        searchBar.resignFirstResponder()
+        let visibleCells = tableView.visibleCells
+        guard let lastVisibleCell = visibleCells.last else { return }
+        let lastIndexPath = tableView.indexPath(for: lastVisibleCell)
+        if let lastIndexPath,
+           lastIndexPath.row >= viewModel.moviesToShow.count - 10 { viewModel.loadNextPage() }
+    }
+    
+    private func openDetailView(for movieDetails: MovieDetails.WithTrailer) {
         let detailsVC = MovieViewController(details: movieDetails)
         navigationController?.pushViewController(detailsVC, animated: true)
     }
     
-    func showErrorAlert() {
+    private func showErrorAlert() {
         let alert = UIAlertController(title: viewModel.errorTitle ?? LocalizedText.Error.title,
                                       message: viewModel.errorMessage ?? LocalizedText.Error.unknown,
                                       preferredStyle: .alert)
@@ -161,7 +196,7 @@ private extension HomeViewController {
         present(alert, animated: true, completion: nil)
     }
     
-    func updateTable() {
+    private func updateTable() {
         if viewModel.currentPage >= 2 { tableView.reloadData() } else {
             UIView.transition(with: tableView, duration: 0.3, options: .transitionCrossDissolve, animations: {
                 self.tableView.reloadData()
@@ -169,21 +204,18 @@ private extension HomeViewController {
         }
     }
     
-    @objc func refreshData() {
-        viewModel.changeSortOption(to: viewModel.sortOption)
+    @objc private func refreshData() {
+        viewModel.changeSortOption(to: viewModel.sortOption, refresh: true)
     }
 
-    @objc func showOptions() {
+    @objc private func showOptions() {
         let actionSheet = UIAlertController(title: LocalizedText.sortTitle, message: LocalizedText.sortDescription, preferredStyle: .actionSheet)
         
         for option in MovieList.allCases {
             let action = UIAlertAction(title: option.title, style: .default) { _ in
                 self.viewModel.changeSortOption(to: option)
                 self.title = option.title
-                if self.tableView.numberOfRows(inSection: 0) > 0 {
-                    let indexPath = IndexPath(row: 0, section: 0)
-                    self.tableView.scrollToRow(at: indexPath, at: .top, animated: true)
-                }
+                self.scrollUP()
             }
             if option == viewModel.sortOption {
                 let image = UIImage(systemName: "checkmark")
@@ -195,55 +227,14 @@ private extension HomeViewController {
         present(actionSheet, animated: true)
     }
     
-    @objc func dismissKeyboard() {
-        searchBar.resignFirstResponder()
-    }
-}
-
-
-//MARK: - UITableView Delegate
-extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return viewModel.filteredMovies.count
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: "MovieCell", for: indexPath) as? MovieCell else {
-            return UITableViewCell()
-        }
-        let movie = viewModel.filteredMovies[indexPath.row]
-        let genres = viewModel.findGenres(from: movie.genreIDs ?? [ ])
-        cell.configure(title: movie.fullTitle, genre: genres, rating: movie.ratingString)
-        if let path = movie.imageURLString,
-           let url = URL(string: path) {
-            let options: KingfisherOptionsInfo = viewModel.offlineMode ? [.onlyFromCache] : [ ]
-            cell.movieImageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"), options: options)
-        }
-        return cell
-    }
-
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if let movieID = viewModel.filteredMovies[indexPath.row].id {
-            viewModel.openMovie(withID: movieID)
+    private func scrollUP() {
+        if self.tableView.numberOfRows(inSection: 0) > 0 {
+            let indexPath = IndexPath(row: 0, section: 0)
+            self.tableView.scrollToRow(at: indexPath, at: .top, animated: true)
         }
     }
     
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+    @objc private func dismissKeyboard() {
         searchBar.resignFirstResponder()
-        let visibleCells = tableView.visibleCells
-        guard let lastVisibleCell = visibleCells.last else { return }
-        let lastIndexPath = tableView.indexPath(for: lastVisibleCell)
-        if let lastIndexPath,
-           lastIndexPath.row >= viewModel.filteredMovies.count - 10,
-           !viewModel.allPagesLoaded,
-           viewModel.state != .loading { viewModel.loadNextPage() }
-    }
-}
-
-
-//MARK: - UISearchBar Delegate
-extension HomeViewController: UISearchBarDelegate {
-    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        viewModel.findMovie(withText: searchText)
     }
 }

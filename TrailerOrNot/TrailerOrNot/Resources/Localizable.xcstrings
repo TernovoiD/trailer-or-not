@@ -133,6 +133,17 @@
         }
       }
     },
+    "Unable to load movies..." : {
+      "comment" : "Empty data lable",
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ой, не можу завантажити фільми…"
+          }
+        }
+      }
+    },
     "Upcoming" : {
       "comment" : "Title: Upcoming",
       "localizations" : {

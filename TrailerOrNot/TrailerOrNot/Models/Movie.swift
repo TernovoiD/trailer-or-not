@@ -27,6 +27,12 @@ struct Movie: Codable {
         rating = try values.decodeIfPresent(Double.self, forKey: .rating)
 	}
     
+    func titleContains(_ text: String) -> Bool {
+        guard let movieTitle = title?.lowercased() else { return false }
+        let textToSearch = text.lowercased()
+        return movieTitle.contains(textToSearch)
+    }
+    
     var fullTitle: String {
         if let title {
             if let releaseDate = releaseDate {

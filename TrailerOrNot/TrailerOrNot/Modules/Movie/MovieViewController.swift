@@ -27,6 +27,7 @@ final class MovieViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        configureTrailerButton()
         populateData()
     }
     
@@ -73,7 +74,7 @@ final class MovieViewController: UIViewController {
         playButton.setBackgroundImage(UIImage(systemName: "play.circle.fill"), for: .normal)
         playButton.tintColor = .systemRed
         playButton.addTarget(self, action: #selector(playButtonTapped), for: .touchUpInside)
-        if let _ = details.trailerPath { view.addSubview(playButton) }
+        view.addSubview(playButton)
         
         
         ratingLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -144,6 +145,12 @@ final class MovieViewController: UIViewController {
         
         if let path = movie.imageURLString, let url = URL(string: path) {
             imageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"))
+        }
+    }
+    
+    func configureTrailerButton() {
+        if details.trailerPath == nil || details.trailerPath == "" {
+            playButton.isHidden = true
         }
     }
     
