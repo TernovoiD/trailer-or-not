@@ -8,7 +8,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         window = UIWindow(windowScene: windowScene)
-        let homeVC = HomeViewController()
+        let theMovieDataBase = TMDBService()
+        let homeVC = HomeViewController(movieService: theMovieDataBase)
         let homeNC = UINavigationController(rootViewController: homeVC)
         window?.rootViewController = homeNC
         window?.makeKeyAndVisible()

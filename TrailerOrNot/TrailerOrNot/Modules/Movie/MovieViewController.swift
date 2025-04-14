@@ -27,7 +27,6 @@ final class MovieViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        setupConstraints()
         populateData()
     }
     
@@ -44,40 +43,41 @@ final class MovieViewController: UIViewController {
         contentView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentView)
         
+        imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
         imageView.backgroundColor = .gray
         imageView.isUserInteractionEnabled = true
         imageView.addGestureRecognizer(tapGesture)
+        view.addSubview(imageView)
         
+        nameLabel.translatesAutoresizingMaskIntoConstraints = false
         nameLabel.font = .boldSystemFont(ofSize: 24)
+        view.addSubview(nameLabel)
+        
+        countryYearLabel.translatesAutoresizingMaskIntoConstraints = false
         countryYearLabel.font = .systemFont(ofSize: 16)
+        view.addSubview(countryYearLabel)
+        
+        genreLabel.translatesAutoresizingMaskIntoConstraints = false
         genreLabel.font = .systemFont(ofSize: 14)
         genreLabel.numberOfLines = 2
+        view.addSubview(genreLabel)
+        
+        overviewLabel.translatesAutoresizingMaskIntoConstraints = false
         overviewLabel.numberOfLines = 0
         overviewLabel.font = .systemFont(ofSize: 16)
+        view.addSubview(overviewLabel)
         
+        playButton.translatesAutoresizingMaskIntoConstraints = false
         playButton.setBackgroundImage(UIImage(systemName: "play.circle.fill"), for: .normal)
         playButton.tintColor = .systemRed
         playButton.addTarget(self, action: #selector(playButtonTapped), for: .touchUpInside)
+        if let _ = details.trailerPath { view.addSubview(playButton) }
         
-        view.addSubview(imageView)
-        view.addSubview(nameLabel)
-        view.addSubview(countryYearLabel)
-        view.addSubview(genreLabel)
-        view.addSubview(playButton)
-        view.addSubview(ratingLabel)
-        view.addSubview(overviewLabel)
-    }
-    
-    private func setupConstraints() {
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        nameLabel.translatesAutoresizingMaskIntoConstraints = false
-        countryYearLabel.translatesAutoresizingMaskIntoConstraints = false
-        genreLabel.translatesAutoresizingMaskIntoConstraints = false
-        playButton.translatesAutoresizingMaskIntoConstraints = false
+        
         ratingLabel.translatesAutoresizingMaskIntoConstraints = false
-        overviewLabel.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(ratingLabel)
         
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -133,23 +133,13 @@ final class MovieViewController: UIViewController {
         let movie = details.movieDetails
         nameLabel.text = movie.title
         countryYearLabel.text = "\(movie.originCountry?.first ?? "Unknown Country"), \(movie.releaseDate?.prefix(4) ?? "Unknown Year")"
+        ratingLabel.text = "Rating: \(String(format: "%.1f", movie.rating ?? 0))"
+        overviewLabel.text = movie.overview ?? ""
         
         if let genres = movie.genres?.compactMap({ $0.name }) {
             genreLabel.text = genres.joined(separator: ", ")
         } else {
             genreLabel.text = "No genres available"
-        }
-        
-        if let rating = movie.rating {
-            ratingLabel.text = "Rating: \(String(format: "%.1f", rating))"
-        } else {
-            ratingLabel.text = "Rating not available"
-        }
-        
-        if let overview = movie.overview {
-            overviewLabel.text = overview
-        } else {
-            overviewLabel.text = ""
         }
         
         if let path = movie.imageURLString, let url = URL(string: path) {

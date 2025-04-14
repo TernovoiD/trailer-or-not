@@ -2,6 +2,8 @@ import Foundation
 import Combine
 
 final class HomeViewModel {
+    private let moviesAPI: TMDBService
+    
     @Published var allMovies: [Movie] = [ ]
     @Published var movieDetails: MovieDetails.WithTrailer?
     @Published var searchText: String = ""
@@ -17,7 +19,6 @@ final class HomeViewModel {
     var offlineMode = false
 
     private var cancellables = Set<AnyCancellable>()
-    private let moviesAPI = TMDBService()
     
     enum State { case loading, loaded, empty }
     
@@ -30,7 +31,8 @@ final class HomeViewModel {
         }
     }
     
-    init() {
+    init(moviesAPI: TMDBService) {
+        self.moviesAPI = moviesAPI
         Task {
             await loadGenres()
             changeSortOption(to: .popular)
@@ -62,7 +64,7 @@ final class HomeViewModel {
     func openMovie(withID movieID: Int) {
         checkConnection()
         if offlineMode {
-            showError(message: "You are offline. Please, enable your Wi-Fi or connect using cellular data.")
+            showError(message: LocalizedText.Error.network)
             return
         }
         Task {
@@ -120,7 +122,7 @@ final class HomeViewModel {
     private func checkConnection() {
         let isConnected = moviesAPI.isInternetAvailable()
         if !isConnected && !offlineMode {
-            showError(message: "You are offline. Please, enable your Wi-Fi or connect using cellular data.")
+            showError(message: LocalizedText.Error.network)
         }
         offlineMode = !isConnected
     }
@@ -132,7 +134,7 @@ final class HomeViewModel {
         }
     }
 
-    private func showError(title: String? = "Error", message: String) {
+    private func showError(title: String? = LocalizedText.Error.title, message: String) {
         self.errorTitle = title
         self.errorMessage = message
         self.error = true

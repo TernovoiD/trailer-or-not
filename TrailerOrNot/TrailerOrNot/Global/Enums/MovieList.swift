@@ -1,3 +1,5 @@
+import Foundation
+
 enum MovieList: String, CaseIterable {
     case popular = "popular"
     case upcoming = "upcoming"
@@ -7,13 +9,13 @@ enum MovieList: String, CaseIterable {
     var title: String {
         switch self {
         case .popular:
-            return "Popular"
+            return NSLocalizedString("Popular", comment: "Title: Popular")
         case .upcoming:
-            return "Upcoming"
+            return NSLocalizedString("Upcoming", comment: "Title: Upcoming")
         case .topRated:
-            return "Top rated"
+            return NSLocalizedString("Top rated", comment: "Title: Top rated")
         case .nowPlaying:
-            return "Now playing"
+            return NSLocalizedString("Now playing", comment: "Title: Now playing")
         }
     }
 }

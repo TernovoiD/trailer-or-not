@@ -37,14 +37,10 @@ class PosterViewController: UIViewController, UIScrollViewDelegate {
         imageView.isUserInteractionEnabled = true
         scrollView.addSubview(imageView)
         
-        closeButton.setTitle("Close", for: .normal)
-        closeButton.setTitleColor(.blue, for: .normal)
-        closeButton.addTarget(self, action: #selector(closeButtonTapped), for: .touchUpInside)
         closeButton.translatesAutoresizingMaskIntoConstraints = false
-        closeButton.backgroundColor = .white.withAlphaComponent(0.7)
-        closeButton.layer.cornerRadius = 5
-        closeButton.layer.borderWidth = 1
-        closeButton.layer.borderColor = UIColor.lightGray.cgColor
+        closeButton.setTitle("Close", for: .normal)
+        closeButton.setTitleColor(.white, for: .normal)
+        closeButton.addTarget(self, action: #selector(closeButtonTapped), for: .touchUpInside)
         view.addSubview(closeButton)
         
         NSLayoutConstraint.activate([

@@ -4,13 +4,23 @@ import Kingfisher
 
 final class HomeViewController: UIViewController {
     private var subscriptions = Set<AnyCancellable>()
-    private var viewModel = HomeViewModel()
+    private var viewModel: HomeViewModel
 
     private let searchBar = UISearchBar()
     private let tableView = UITableView()
     private let refreshControl = UIRefreshControl()
     private let loadingIndicator = UIActivityIndicatorView()
     private let emptyDataLabel = UILabel()
+    
+    init(movieService: TMDBService) {
+        let viewModel = HomeViewModel(moviesAPI: movieService)
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -23,13 +33,13 @@ final class HomeViewController: UIViewController {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
-        title = "Popular movies"
+        title = MovieList.popular.title
         navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Sort", style: .plain, target: self, action: #selector(showOptions))
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: LocalizedText.sortButtonText, style: .plain, target: self, action: #selector(showOptions))
 
         searchBar.translatesAutoresizingMaskIntoConstraints = false
         searchBar.delegate = self
-        searchBar.placeholder = "Search"
+        searchBar.placeholder = LocalizedText.searchBarPlaceholder
         view.addSubview(searchBar)
 
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -49,7 +59,7 @@ final class HomeViewController: UIViewController {
         view.addSubview(loadingIndicator)
         
         emptyDataLabel.translatesAutoresizingMaskIntoConstraints = false
-        emptyDataLabel.text = "Oops, no movies found..."
+        emptyDataLabel.text = LocalizedText.emptySearchLable
         emptyDataLabel.textAlignment = .center
         emptyDataLabel.isHidden = true
         view.addSubview(emptyDataLabel)
@@ -144,10 +154,10 @@ private extension HomeViewController {
     }
     
     func showErrorAlert() {
-        let alert = UIAlertController(title: viewModel.errorTitle ?? "Error",
-                                      message: viewModel.errorMessage ?? "An unknown error occurred.",
+        let alert = UIAlertController(title: viewModel.errorTitle ?? LocalizedText.Error.title,
+                                      message: viewModel.errorMessage ?? LocalizedText.Error.unknown,
                                       preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        alert.addAction(UIAlertAction(title: LocalizedText.okButtonText, style: .default, handler: nil))
         present(alert, animated: true, completion: nil)
     }
     
@@ -164,7 +174,7 @@ private extension HomeViewController {
     }
 
     @objc func showOptions() {
-        let actionSheet = UIAlertController(title: "Choose Sorting Preference", message: "Select your preferred option to customize how movies are displayed. Adjust your viewing experience to highlight the content you want to see.", preferredStyle: .actionSheet)
+        let actionSheet = UIAlertController(title: LocalizedText.sortTitle, message: LocalizedText.sortDescription, preferredStyle: .actionSheet)
         
         for option in MovieList.allCases {
             let action = UIAlertAction(title: option.title, style: .default) { _ in
@@ -181,7 +191,7 @@ private extension HomeViewController {
             }
             actionSheet.addAction(action)
         }
-        actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        actionSheet.addAction(UIAlertAction(title: LocalizedText.cancelButtonText, style: .cancel))
         present(actionSheet, animated: true)
     }
     
@@ -203,7 +213,7 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         }
         let movie = viewModel.filteredMovies[indexPath.row]
         let genres = viewModel.findGenres(from: movie.genreIDs ?? [ ])
-        cell.configure(title: movie.title ?? "", genre: genres, rating: movie.ratingString)
+        cell.configure(title: movie.fullTitle, genre: genres, rating: movie.ratingString)
         if let path = movie.imageURLString,
            let url = URL(string: path) {
             let options: KingfisherOptionsInfo = viewModel.offlineMode ? [.onlyFromCache] : [ ]
