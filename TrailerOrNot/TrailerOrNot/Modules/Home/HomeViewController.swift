@@ -4,13 +4,7 @@ import Combine
 final class HomeViewController: UIViewController {
     private var subscriptions = Set<AnyCancellable>()
     private var viewModel: HomeViewModel
-
-    private let searchBar = UISearchBar()
-    private let tableView = UITableView()
-    private let refreshControl = UIRefreshControl()
-    private let emptyDataLabel = UILabel()
-    private let loadingIndicator = LoadingCircle()
-    
+    private let homeView = HomeView()
     private let tableManager: HomeTableViewManager
     private let searchBarManager: HomeSearchBarManager
     
@@ -33,50 +27,20 @@ final class HomeViewController: UIViewController {
     }
     
     private func setupUI() {
+        view = homeView
         view.backgroundColor = .systemBackground
+        homeView.setupWith(tableManager: tableManager, searchBarManager: searchBarManager)
+        tableManager.scrollAction = paginationCheck
+        homeView.refreshControl.addTarget(self, action: #selector(refreshData), for: .valueChanged)
+        
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
         title = MovieList.popular.title
         navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: LocalizedText.sortButtonText, style: .plain, target: self, action: #selector(showOptions))
         
-        setupUITable()
-        setupSearchBar()
-        setupEmptyLabel()
-        setupLoadingIndicator()
-        setupConstraints()
-    }
-    
-    private func setupUITable() {
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        tableManager.configureTableView(tableView)
-        tableManager.scrollAction = paginationCheck
-        refreshControl.addTarget(self, action: #selector(refreshData), for: .valueChanged)
-        tableView.refreshControl = refreshControl
-        view.addSubview(tableView)
-    }
-    
-    private func setupSearchBar() {
-        searchBar.translatesAutoresizingMaskIntoConstraints = false
-        searchBar.delegate = searchBarManager
-        searchBar.placeholder = LocalizedText.searchBarPlaceholder
-        view.addSubview(searchBar)
-    }
-    
-    private func setupEmptyLabel() {
-        emptyDataLabel.translatesAutoresizingMaskIntoConstraints = false
-        emptyDataLabel.text = LocalizedText.Error.emptyData
-        emptyDataLabel.textAlignment = .center
-        emptyDataLabel.isHidden = true
-        view.addSubview(emptyDataLabel)
-    }
-    
-    
-    private func setupLoadingIndicator() {
-        loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
-        loadingIndicator.startAnimating()
-        view.addSubview(loadingIndicator)
     }
     
     private func bindViewModel() {
@@ -88,7 +52,8 @@ final class HomeViewController: UIViewController {
         
         viewModel.$state
             .sink { [weak self] state in
-                self?.updateUI(state)
+                guard let page = self?.viewModel.currentPage else { return }
+                self?.homeView.updateUI(state, currentPage: page)
             }
             .store(in: &subscriptions)
         
@@ -106,79 +71,15 @@ final class HomeViewController: UIViewController {
             .store(in: &subscriptions)
     }
     
-    private func setupConstraints() {
-        NSLayoutConstraint.activate([
-            searchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            
-            tableView.topAnchor.constraint(equalTo: searchBar.bottomAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            
-            emptyDataLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            emptyDataLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            emptyDataLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            emptyDataLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            
-            loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            loadingIndicator.heightAnchor.constraint(equalToConstant: 200),
-            loadingIndicator.widthAnchor.constraint(equalToConstant: 200),
-        ])
-    }
-    
-    private func updateUI(_ state: HomeViewModel.State) {
-        switch state {
-        case .loading:
-            loadingUI(true)
-        case .refreshing:
-            loadingUI(false)
-        case .ready:
-            updateTable()
-            loadingUI(false)
-            showTable()
-            refreshControl.endRefreshing()
-        case .emptyData:
-            loadingUI(false)
-            updateTable()
-            showEmptySign(with: LocalizedText.Error.emptyData)
-            refreshControl.endRefreshing()
-        case .emptySearch:
-            loadingUI(false)
-            updateTable()
-            showEmptySign(with: LocalizedText.Error.emptySearch)
-            refreshControl.endRefreshing()
-        }
-    }
-    
-    private func loadingUI(_ inProgress: Bool) {
-        if inProgress {
-            loadingIndicator.startAnimating()
-            loadingIndicator.isHidden = false
-        } else {
-            loadingIndicator.stopAnimating()
-            loadingIndicator.isHidden = true
-        }
-    }
-    
-    private func showTable() {
-        tableView.isHidden = false
-        emptyDataLabel.isHidden = true
-    }
-    
-    private func showEmptySign(with text: String) {
-        tableView.isHidden = true
-        emptyDataLabel.text = text
-        emptyDataLabel.isHidden = false
+    private func updateTable() {
+        homeView.updateTable(forPage: viewModel.currentPage)
     }
     
     private func paginationCheck() {
-        searchBar.resignFirstResponder()
-        let visibleCells = tableView.visibleCells
+        homeView.searchBar.resignFirstResponder()
+        let visibleCells = homeView.tableView.visibleCells
         guard let lastVisibleCell = visibleCells.last else { return }
-        let lastIndexPath = tableView.indexPath(for: lastVisibleCell)
+        let lastIndexPath = homeView.tableView.indexPath(for: lastVisibleCell)
         if let lastIndexPath,
            lastIndexPath.row >= viewModel.moviesToShow.count - 10 { viewModel.loadNextPage() }
     }
@@ -194,14 +95,6 @@ final class HomeViewController: UIViewController {
                                       preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: LocalizedText.okButtonText, style: .default, handler: nil))
         present(alert, animated: true, completion: nil)
-    }
-    
-    private func updateTable() {
-        if viewModel.currentPage >= 2 { tableView.reloadData() } else {
-            UIView.transition(with: tableView, duration: 0.3, options: .transitionCrossDissolve, animations: {
-                self.tableView.reloadData()
-            }, completion: nil)
-        }
     }
     
     @objc private func refreshData() {
@@ -228,13 +121,13 @@ final class HomeViewController: UIViewController {
     }
     
     private func scrollUP() {
-        if self.tableView.numberOfRows(inSection: 0) > 0 {
+        if homeView.tableView.numberOfRows(inSection: 0) > 0 {
             let indexPath = IndexPath(row: 0, section: 0)
-            self.tableView.scrollToRow(at: indexPath, at: .top, animated: true)
+            homeView.tableView.scrollToRow(at: indexPath, at: .top, animated: true)
         }
     }
     
     @objc private func dismissKeyboard() {
-        searchBar.resignFirstResponder()
+        homeView.searchBar.resignFirstResponder()
     }
 }
