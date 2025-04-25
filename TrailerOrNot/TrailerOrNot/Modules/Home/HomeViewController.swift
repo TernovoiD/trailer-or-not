@@ -7,12 +7,13 @@ final class HomeViewController: UIViewController {
     private let homeView = HomeView()
     private let tableManager: HomeTableViewManager
     private let searchBarManager: HomeSearchBarManager
+    private let router: MainRouter
     
-    init(movieService: TMDBService) {
-        let viewModel = HomeViewModel(moviesAPI: movieService)
+    init(viewModel: HomeViewModel, router: MainRouter) {
+        self.viewModel = viewModel
+        self.router = router
         self.tableManager = HomeTableViewManager(viewModel: viewModel)
         self.searchBarManager = HomeSearchBarManager(viewModel: viewModel)
-        self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -85,16 +86,13 @@ final class HomeViewController: UIViewController {
     }
     
     private func openDetailView(for movieDetails: MovieDetails.WithTrailer) {
-        let detailsVC = MovieViewController(details: movieDetails)
-        navigationController?.pushViewController(detailsVC, animated: true)
+        router.showMovieDetails(for: movieDetails)
     }
     
     private func showErrorAlert() {
-        let alert = UIAlertController(title: viewModel.errorTitle ?? LocalizedText.Error.title,
-                                      message: viewModel.errorMessage ?? LocalizedText.Error.unknown,
-                                      preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: LocalizedText.okButtonText, style: .default, handler: nil))
-        present(alert, animated: true, completion: nil)
+        let title = viewModel.errorTitle ?? LocalizedText.Error.title
+        let message = viewModel.errorMessage ?? LocalizedText.Error.unknown
+        router.showErrorAlert(title: title, message: message)
     }
     
     @objc private func refreshData() {
@@ -111,7 +109,7 @@ final class HomeViewController: UIViewController {
                 self.scrollUP()
             }
             if option == viewModel.sortOption {
-                let image = UIImage(systemName: "checkmark")
+                let image = UIImage(systemName: ImageAssets.checkMark)
                 action.setValue(image, forKey: "image")
             }
             actionSheet.addAction(action)

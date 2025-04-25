@@ -8,11 +8,14 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         window = UIWindow(windowScene: windowScene)
-        let theMovieDataBase = TMDBService()
-        let homeVC = HomeViewController(movieService: theMovieDataBase)
-        let homeNC = UINavigationController(rootViewController: homeVC)
-        window?.rootViewController = homeNC
+        
+        let navigationController = UINavigationController()
+        window?.rootViewController = navigationController
         window?.makeKeyAndVisible()
+        
+        let container = AppContainer(navigationController: navigationController)
+        let homeVC = container.makeHomeViewController()
+        navigationController.viewControllers = [homeVC]
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {

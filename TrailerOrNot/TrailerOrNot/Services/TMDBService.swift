@@ -17,40 +17,25 @@ class TMDBService {
     }
     
     func loadMovies(type: MovieList, page: Int) async throws -> [Movie] {
-        let path = generatePath(for: .movieList(type))
         let parameters: [String: String] = [
             "language": "en-US",
             "page": "\(page)"
         ]
-        
-        let response: MovieResponse = try await AF.request(path, method: .get, parameters: parameters, headers: headers)
-            .serializingDecodable(MovieResponse.self)
-            .value
-        
+        let response: MovieResponse = try await getData(endpoint: .movieList(type), with: parameters)
         return response.results ?? [ ]
     }
     
     func loadMovieDetails(forID movieID: Int) async throws -> MovieDetails? {
-        let path = generatePath(for: .movieDetails(movieID))
-        let details: MovieDetails = try await AF.request(path, method: .get, parameters: languageParameter, headers: headers)
-            .serializingDecodable(MovieDetails.self)
-            .value
-        return details
+        return try await getData(endpoint: .movieDetails(movieID))
     }
     
     func loadGenres() async throws -> [Genre] {
-        let path = generatePath(for: .genreList)
-        let response: GenreResponse = try await AF.request(path, method: .get, parameters: languageParameter, headers: headers)
-            .serializingDecodable(GenreResponse.self)
-            .value
+        let response: GenreResponse = try await getData(endpoint: .genreList)
         return response.genres ?? [ ]
     }
     
     func trailerPath(forID movieID: Int) async throws -> String? {
-        let path = generatePath(for: .movieVideos(movieID))
-        let response: VideoResponse = try await AF.request(path, method: .get, parameters: languageParameter, headers: headers)
-            .serializingDecodable(VideoResponse.self)
-            .value
+        let response: VideoResponse = try await getData(endpoint: .movieVideos(movieID))
         guard let videos = response.results else { return nil }
         return findFirstTrailer(from: videos)
     }
@@ -81,6 +66,15 @@ class TMDBService {
            website.lowercased() == "youtube" {
             return baseURLStringYT + key
         } else { return nil }
+    }
+    
+    private func getData<T: Decodable>(endpoint: Endpoint, with parameters: [String: String]? = nil) async throws -> T {
+        let requestParameters: [String: String] = parameters ?? ["language":"en-US"]
+        let urlPath = generatePath(for: endpoint)
+        return try await AF.request(urlPath, method: .get, parameters: requestParameters, headers: headers)
+                    .validate()
+                    .serializingDecodable(T.self)
+                    .value
     }
 }
 

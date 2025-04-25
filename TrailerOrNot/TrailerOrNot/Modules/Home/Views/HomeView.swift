@@ -1,6 +1,8 @@
 import UIKit
 
 class HomeView: UIView {
+    // CR: чи мають всі ці поля бути internal?
+    // CR: деякі можна прямо зараз зробити private, деякі ні, який паттерн тут порушується?
     let searchBar = UISearchBar()
     let tableView = UITableView()
     let refreshControl = UIRefreshControl()
@@ -105,6 +107,7 @@ class HomeView: UIView {
     }
     
     func updateTable(forPage page: Int) {
+        // CR: чи має ця логіка бути на рівні view?
         if page >= 2 { tableView.reloadData() } else {
             UIView.transition(with: tableView, duration: 0.3, options: .transitionCrossDissolve, animations: {
                 self.tableView.reloadData()
@@ -132,4 +135,4 @@ class HomeView: UIView {
         emptyDataLabel.text = text
         emptyDataLabel.isHidden = false
     }
-   }
+}

@@ -3,7 +3,7 @@ import WebKit
 
 class TrailerViewController: UIViewController {
     let trailerPath: String
-    var webView = WKWebView()
+    private var webView = WKWebView()
 
     init(trailerPath: String) {
         self.trailerPath = trailerPath

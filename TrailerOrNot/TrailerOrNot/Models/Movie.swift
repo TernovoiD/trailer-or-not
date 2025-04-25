@@ -33,28 +33,10 @@ struct Movie: Codable {
         return movieTitle.contains(textToSearch)
     }
     
-    var fullTitle: String {
-        if let title {
-            if let releaseDate = releaseDate {
-                let year = String(releaseDate.prefix(4))
-                return [title, year].joined(separator: ", ")
-            } else {
-                return title
-            }
-        } else { return "" }
-    }
-    
-    var imageURLString: String? {
-        let basePath = "https://image.tmdb.org/t/p/w500"
-        guard let posterPath else { return nil }
-        return basePath + posterPath
-    }
-    
-    var ratingString: String {
-        if let rating {
-            return "\(rating)"
-        } else {
-            return ""
-        }
+    struct ShortInfo {
+        let title: String
+        let genres: String
+        let rating: String
+        let imageURL: URL?
     }
 }

@@ -1,12 +1,19 @@
 import UIKit
 import Kingfisher
 
+protocol HomeViewModelProtocol {
+    var moviesToShow: [Movie] { get }
+    func shortInfo(for movie: Movie) -> Movie.ShortInfo
+    var offlineMode: Bool { get }
+    func openMovie(withID id: Int)
+}
+
 class HomeTableViewManager: NSObject, UITableViewDelegate, UITableViewDataSource {
-    private let viewModel: HomeViewModel
-    private let CellID = "MovieCell"
+    private let viewModel: HomeViewModelProtocol
+    private let CellID = String(describing: MovieCell.self)
     var scrollAction: (() -> ())?
     
-    init(viewModel: HomeViewModel) {
+    init(viewModel: HomeViewModelProtocol) {
         self.viewModel = viewModel
     }
     
@@ -28,13 +35,7 @@ class HomeTableViewManager: NSObject, UITableViewDelegate, UITableViewDataSource
         }
 
         let movie = viewModel.moviesToShow[indexPath.row]
-        let genres = viewModel.findGenres(from: movie.genreIDs ?? [])
-        cell.configure(title: movie.fullTitle, genre: genres, rating: movie.ratingString)
-
-        if let path = movie.imageURLString, let url = URL(string: path) {
-            let options: KingfisherOptionsInfo = viewModel.offlineMode == true ? [.onlyFromCache] : []
-            cell.movieImageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"), options: options)
-        }
+        cell.configure(from: viewModel.shortInfo(for: movie), onlineMode: !viewModel.offlineMode)
         return cell
     }
 
