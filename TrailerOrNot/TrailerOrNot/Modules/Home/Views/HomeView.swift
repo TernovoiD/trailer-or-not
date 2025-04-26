@@ -1,14 +1,16 @@
 import UIKit
 
 class HomeView: UIView {
-    // CR: чи мають всі ці поля бути internal?
-    // CR: деякі можна прямо зараз зробити private, деякі ні, який паттерн тут порушується?
-    let searchBar = UISearchBar()
-    let tableView = UITableView()
-    let refreshControl = UIRefreshControl()
-    let emptyDataLabel = UILabel()
-    let loadingIndicator = LoadingCircle()
+    private let searchBar = UISearchBar()
+    private let tableView = UITableView()
+    private let refreshControl = UIRefreshControl()
+    private let emptyDataLabel = UILabel()
+    private let loadingIndicator = LoadingCircle()
     
+    var search: UISearchBar { searchBar }
+    var table: UITableView { tableView }
+    var refresh: UIRefreshControl { refreshControl }
+ 
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -81,41 +83,8 @@ class HomeView: UIView {
         tableManager.configureTableView(tableView)
         searchBar.delegate = searchBarManager
     }
-    
-    func updateUI(_ state: HomeViewModel.State, currentPage: Int) {
-        switch state {
-        case .loading:
-            loadingUI(true)
-        case .refreshing:
-            loadingUI(false)
-        case .ready:
-            updateTable(forPage: currentPage)
-            loadingUI(false)
-            showTable()
-            refreshControl.endRefreshing()
-        case .emptyData:
-            loadingUI(false)
-            updateTable(forPage: currentPage)
-            showEmptySign(with: LocalizedText.Error.emptyData)
-            refreshControl.endRefreshing()
-        case .emptySearch:
-            loadingUI(false)
-            updateTable(forPage: currentPage)
-            showEmptySign(with: LocalizedText.Error.emptySearch)
-            refreshControl.endRefreshing()
-        }
-    }
-    
-    func updateTable(forPage page: Int) {
-        // CR: чи має ця логіка бути на рівні view?
-        if page >= 2 { tableView.reloadData() } else {
-            UIView.transition(with: tableView, duration: 0.3, options: .transitionCrossDissolve, animations: {
-                self.tableView.reloadData()
-            }, completion: nil)
-        }
-    }
        
-    private func loadingUI(_ inProgress: Bool) {
+    func loadingUI(_ inProgress: Bool) {
         if inProgress {
             loadingIndicator.startAnimating()
             loadingIndicator.isHidden = false
@@ -125,12 +94,12 @@ class HomeView: UIView {
         }
     }
     
-    private func showTable() {
+    func showTable() {
         tableView.isHidden = false
         emptyDataLabel.isHidden = true
     }
     
-    private func showEmptySign(with text: String) {
+    func showEmptySign(with text: String) {
         tableView.isHidden = true
         emptyDataLabel.text = text
         emptyDataLabel.isHidden = false
