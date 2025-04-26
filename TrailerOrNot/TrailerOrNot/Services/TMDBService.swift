@@ -12,6 +12,7 @@ class TMDBService {
     private enum Endpoint {
         case movieList(MovieList)
         case movieDetails(Int)
+        case movieSearch
         case genreList
         case movieVideos(Int)
     }
@@ -23,6 +24,18 @@ class TMDBService {
         ]
         let response: MovieResponse = try await getData(endpoint: .movieList(type), with: parameters)
         return response.results ?? [ ]
+    }
+    
+    func searchMovies(query: String, page: Int = 1) async throws -> [Movie] {
+        let parameters: [String: String] = [
+            "query": query,
+            "include_adult": "false",
+            "language": "en-US",
+            "page": "\(page)"
+        ]
+        
+        let response: MovieResponse = try await getData(endpoint: .movieSearch, with: parameters)
+        return response.results ?? []
     }
     
     func loadMovieDetails(forID movieID: Int) async throws -> MovieDetails? {
@@ -55,6 +68,8 @@ class TMDBService {
             return baseURL + "/genre/movie/list"
         case .movieVideos(let movieID):
             return baseURL + "/movie/\(movieID)/videos"
+        case .movieSearch:
+            return baseURL + "/search/movie"
         }
     }
     
