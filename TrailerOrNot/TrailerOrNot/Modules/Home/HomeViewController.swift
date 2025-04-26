@@ -7,12 +7,13 @@ final class HomeViewController: UIViewController {
     private let homeView = HomeView()
     private let tableManager: HomeTableViewManager
     private let searchBarManager: HomeSearchBarManager
+    private let router: MainRouter
     
-    init(movieService: TMDBService) {
-        let viewModel = HomeViewModel(moviesAPI: movieService)
+    init(viewModel: HomeViewModel, router: MainRouter) {
+        self.viewModel = viewModel
+        self.router = router
         self.tableManager = HomeTableViewManager(viewModel: viewModel)
         self.searchBarManager = HomeSearchBarManager(viewModel: viewModel)
-        self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -31,7 +32,7 @@ final class HomeViewController: UIViewController {
         view.backgroundColor = .systemBackground
         homeView.setupWith(tableManager: tableManager, searchBarManager: searchBarManager)
         tableManager.scrollAction = paginationCheck
-        homeView.refreshControl.addTarget(self, action: #selector(refreshData), for: .valueChanged)
+        homeView.refresh.addTarget(self, action: #selector(refreshData), for: .valueChanged)
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         
@@ -46,14 +47,14 @@ final class HomeViewController: UIViewController {
     private func bindViewModel() {
         viewModel.$searchText
             .sink { [weak self] movies in
-                self?.updateTable()
+                self?.homeView.table.reloadData()
             }
             .store(in: &subscriptions)
         
         viewModel.$state
             .sink { [weak self] state in
                 guard let page = self?.viewModel.currentPage else { return }
-                self?.homeView.updateUI(state, currentPage: page)
+                self?.updateUI(state)
             }
             .store(in: &subscriptions)
         
@@ -71,30 +72,56 @@ final class HomeViewController: UIViewController {
             .store(in: &subscriptions)
     }
     
+    private func updateUI(_ state: HomeViewModel.State) {
+        switch state {
+        case .loading:
+            homeView.loadingUI(true)
+        case .refreshing:
+            homeView.loadingUI(false)
+        case .ready:
+            updateTable()
+            homeView.loadingUI(false)
+            homeView.showTable()
+            homeView.refresh.endRefreshing()
+        case .emptyData:
+            homeView.loadingUI(false)
+            updateTable()
+            homeView.showEmptySign(with: LocalizedText.Error.emptyData)
+            homeView.refresh.endRefreshing()
+        case .emptySearch:
+            homeView.loadingUI(false)
+            updateTable()
+            homeView.showEmptySign(with: LocalizedText.Error.emptySearch)
+            homeView.refresh.endRefreshing()
+        }
+    }
+    
     private func updateTable() {
-        homeView.updateTable(forPage: viewModel.currentPage)
+        let page = viewModel.currentPage
+        if page >= 2 { homeView.table.reloadData() } else {
+            UIView.transition(with: homeView.table, duration: 0.3, options: .transitionCrossDissolve, animations: {
+                self.homeView.table.reloadData()
+            }, completion: nil)
+        }
     }
     
     private func paginationCheck() {
-        homeView.searchBar.resignFirstResponder()
-        let visibleCells = homeView.tableView.visibleCells
+        dismissKeyboard()
+        let visibleCells = homeView.table.visibleCells
         guard let lastVisibleCell = visibleCells.last else { return }
-        let lastIndexPath = homeView.tableView.indexPath(for: lastVisibleCell)
+        let lastIndexPath = homeView.table.indexPath(for: lastVisibleCell)
         if let lastIndexPath,
            lastIndexPath.row >= viewModel.moviesToShow.count - 10 { viewModel.loadNextPage() }
     }
     
     private func openDetailView(for movieDetails: MovieDetails.WithTrailer) {
-        let detailsVC = MovieViewController(details: movieDetails)
-        navigationController?.pushViewController(detailsVC, animated: true)
+        router.showMovieDetails(for: movieDetails)
     }
     
     private func showErrorAlert() {
-        let alert = UIAlertController(title: viewModel.errorTitle ?? LocalizedText.Error.title,
-                                      message: viewModel.errorMessage ?? LocalizedText.Error.unknown,
-                                      preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: LocalizedText.okButtonText, style: .default, handler: nil))
-        present(alert, animated: true, completion: nil)
+        let title = viewModel.errorTitle ?? LocalizedText.Error.title
+        let message = viewModel.errorMessage ?? LocalizedText.Error.unknown
+        router.showErrorAlert(title: title, message: message)
     }
     
     @objc private func refreshData() {
@@ -111,7 +138,7 @@ final class HomeViewController: UIViewController {
                 self.scrollUP()
             }
             if option == viewModel.sortOption {
-                let image = UIImage(systemName: "checkmark")
+                let image = UIImage(systemName: ImageAssets.checkMark)
                 action.setValue(image, forKey: "image")
             }
             actionSheet.addAction(action)
@@ -121,13 +148,13 @@ final class HomeViewController: UIViewController {
     }
     
     private func scrollUP() {
-        if homeView.tableView.numberOfRows(inSection: 0) > 0 {
+        if homeView.table.numberOfRows(inSection: 0) > 0 {
             let indexPath = IndexPath(row: 0, section: 0)
-            homeView.tableView.scrollToRow(at: indexPath, at: .top, animated: true)
+            homeView.table.scrollToRow(at: indexPath, at: .top, animated: true)
         }
     }
     
     @objc private func dismissKeyboard() {
-        homeView.searchBar.resignFirstResponder()
+        homeView.search.resignFirstResponder()
     }
 }

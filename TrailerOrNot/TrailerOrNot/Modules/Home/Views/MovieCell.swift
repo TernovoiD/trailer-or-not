@@ -1,8 +1,8 @@
 import UIKit
+import Kingfisher
 
 final class MovieCell: UITableViewCell {
-    let movieImageView = UIImageView()
-    
+    private let movieImageView = UIImageView()
     private let cellBackground = UIView()
     private let tintView = UIView()
     private let titleLabel = UILabel()
@@ -32,7 +32,7 @@ final class MovieCell: UITableViewCell {
         
         movieImageView.translatesAutoresizingMaskIntoConstraints = false
         movieImageView.contentMode = .scaleAspectFill
-        movieImageView.image = UIImage(named: "placeholder")
+        movieImageView.image = UIImage(named: ImageAssets.placeholder)
         movieImageView.layer.cornerRadius = 35
         movieImageView.clipsToBounds = true
         cellBackground.addSubview(movieImageView)
@@ -87,10 +87,15 @@ final class MovieCell: UITableViewCell {
             ratingLabel.trailingAnchor.constraint(equalTo: tintView.trailingAnchor, constant: -20),
         ])
     }
-
-    func configure(title: String, genre: String, rating: String) {
-        titleLabel.text = title
-        genreLabel.text = genre
-        ratingLabel.text = rating
+    
+    func configure(from info: Movie.ShortInfo, onlineMode: Bool) {
+        titleLabel.text = info.title
+        genreLabel.text = info.genres
+        ratingLabel.text = info.rating
+        
+        if let url = info.imageURL {
+            let options: KingfisherOptionsInfo = onlineMode == true ? [] : [.onlyFromCache]
+            movieImageView.kf.setImage(with: url, placeholder: UIImage(named: ImageAssets.placeholder), options: options)
+        }
     }
 }

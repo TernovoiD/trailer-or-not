@@ -37,10 +37,4 @@ struct MovieDetails: Codable {
         let movieDetails: MovieDetails
         let trailerPath: String?
     }
-    
-    var imageURLString: String? {
-        let basePath = "https://image.tmdb.org/t/p/w500"
-        guard let posterPath else { return nil }
-        return basePath + posterPath
-    }
 }

@@ -1,8 +1,7 @@
 import Foundation
 import Combine
 
-@MainActor
-final class HomeViewModel {
+final class HomeViewModel: HomeViewModelProtocol {
     private let moviesAPI: TMDBService
     
     @Published var error: Bool = false
@@ -80,7 +79,26 @@ final class HomeViewModel {
         if state == .loading { return } else { finishLoadingState() }
     }
     
-    func findGenres(from genreIDs: [Int]) -> String {
+    func shortInfo(for movie: Movie) -> Movie.ShortInfo {
+        var title = movie.title ?? ""
+        var rating = ""
+        let imagePath = TMDBImageURL.buildImageURL(for: movie.posterPath, withSize: Screen.size)
+        var imageURL: URL?
+        let genres = findGenres(from: movie.genreIDs ?? [ ])
+        
+        if let releaseDate = movie.releaseDate, !title.isEmpty {
+            let year = String(releaseDate.prefix(4))
+            title = [title, year].joined(separator: ", ")
+        }
+        
+        if let ratingNumber = movie.rating { rating = String(ratingNumber) }
+        
+        if let imagePath { imageURL = URL(string: imagePath) }
+        
+        return Movie.ShortInfo(title: title, genres: genres, rating: rating, imageURL: imageURL)
+    }
+    
+    private func findGenres(from genreIDs: [Int]) -> String {
         var genreString = [String]()
         for genreId in genreIDs {
             if let genre = genres.first(where: { $0.id == genreId }) {

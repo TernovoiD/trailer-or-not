@@ -5,17 +5,10 @@ enum MovieList: String, CaseIterable {
     case upcoming = "upcoming"
     case topRated = "top_rated"
     case nowPlaying = "now_playing"
-    
+}
+
+extension MovieList {
     var title: String {
-        switch self {
-        case .popular:
-            return NSLocalizedString("Popular", comment: "Title: Popular")
-        case .upcoming:
-            return NSLocalizedString("Upcoming", comment: "Title: Upcoming")
-        case .topRated:
-            return NSLocalizedString("Top rated", comment: "Title: Top rated")
-        case .nowPlaying:
-            return NSLocalizedString("Now playing", comment: "Title: Now playing")
-        }
+        LocalizedText.movieListOption(for: self)
     }
 }

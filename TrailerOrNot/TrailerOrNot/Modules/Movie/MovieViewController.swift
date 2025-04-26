@@ -2,8 +2,7 @@ import UIKit
 import Kingfisher
 
 final class MovieViewController: UIViewController {
-    
-    let details: MovieDetails.WithTrailer
+    private var viewModel: MovieViewModel
     
     private let scrollView = UIScrollView()
     private let contentView = UIView()
@@ -16,7 +15,7 @@ final class MovieViewController: UIViewController {
     private let overviewLabel = UILabel()
     
     init(details: MovieDetails.WithTrailer) {
-        self.details = details
+        self.viewModel = MovieViewModel(details: details)
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -36,7 +35,7 @@ final class MovieViewController: UIViewController {
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(showImage))
         tapGesture.cancelsTouchesInView = false
-        title = details.movieDetails.title
+        title = viewModel.title
         
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(scrollView)
@@ -71,7 +70,7 @@ final class MovieViewController: UIViewController {
         view.addSubview(overviewLabel)
         
         playButton.translatesAutoresizingMaskIntoConstraints = false
-        playButton.setBackgroundImage(UIImage(systemName: "play.circle.fill"), for: .normal)
+        playButton.setBackgroundImage(UIImage(systemName: ImageAssets.fillCircle), for: .normal)
         playButton.tintColor = .systemRed
         playButton.addTarget(self, action: #selector(playButtonTapped), for: .touchUpInside)
         view.addSubview(playButton)
@@ -131,32 +130,25 @@ final class MovieViewController: UIViewController {
     }
     
     private func populateData() {
-        let movie = details.movieDetails
-        nameLabel.text = movie.title
-        countryYearLabel.text = "\(movie.originCountry?.first ?? "Unknown Country"), \(movie.releaseDate?.prefix(4) ?? "Unknown Year")"
-        ratingLabel.text = "Rating: \(String(format: "%.1f", movie.rating ?? 0))"
-        overviewLabel.text = movie.overview ?? ""
-        
-        if let genres = movie.genres?.compactMap({ $0.name }) {
-            genreLabel.text = genres.joined(separator: ", ")
-        } else {
-            genreLabel.text = "No genres available"
-        }
-        
-        if let path = movie.imageURLString, let url = URL(string: path) {
-            imageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"))
+        nameLabel.text = viewModel.title
+        countryYearLabel.text = viewModel.countryAndYear
+        ratingLabel.text = viewModel.rating
+        overviewLabel.text = viewModel.overview
+        genreLabel.text = viewModel.genres
+        if let imageURL = viewModel.imageURL {
+            imageView.kf.setImage(with: imageURL, placeholder: UIImage(named: ImageAssets.placeholder))
         }
     }
     
     func configureTrailerButton() {
-        if details.trailerPath == nil || details.trailerPath == "" {
+        if !viewModel.hasTrailer {
             playButton.isHidden = true
         }
     }
     
     @objc private func playButtonTapped() {
-        guard let movieID = details.trailerPath else { return }
-        let trailerVC = TrailerViewController(trailerPath: movieID)
+        guard let path = viewModel.trailerURLPath else { return }
+        let trailerVC = TrailerViewController(trailerPath: path)
         navigationController?.pushViewController(trailerVC, animated: true)
     }
 }

@@ -15,4 +15,17 @@ struct LocalizedText {
         static let emptySearch = NSLocalizedString("Oops, no movies found...", comment: "Empty search lable")
         static let emptyData = NSLocalizedString("Unable to load movies...", comment: "Empty data lable")
     }
+    
+    static func movieListOption(for option: MovieList) -> String {
+        switch option {
+        case .popular:
+            return NSLocalizedString("Popular", comment: "Title: Popular")
+        case .upcoming:
+            return NSLocalizedString("Upcoming", comment: "Title: Upcoming")
+        case .topRated:
+            return NSLocalizedString("Top rated", comment: "Title: Top rated")
+        case .nowPlaying:
+            return NSLocalizedString("Now playing", comment: "Title: Now playing")
+        }
+    }
 }
