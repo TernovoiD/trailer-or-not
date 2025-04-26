@@ -46,19 +46,21 @@ final class HomeViewController: UIViewController {
     
     private func bindViewModel() {
         viewModel.$searchText
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] movies in
                 self?.homeView.table.reloadData()
             }
             .store(in: &subscriptions)
         
         viewModel.$state
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] state in
-                guard let page = self?.viewModel.currentPage else { return }
                 self?.updateUI(state)
             }
             .store(in: &subscriptions)
         
         viewModel.$error
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] errorOccurred in
                 guard errorOccurred else { return }
                 self?.showErrorAlert()
@@ -66,6 +68,7 @@ final class HomeViewController: UIViewController {
             .store(in: &subscriptions)
         
         viewModel.$movieDetails
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] details in
                 if let details { self?.openDetailView(for: details) }
             }

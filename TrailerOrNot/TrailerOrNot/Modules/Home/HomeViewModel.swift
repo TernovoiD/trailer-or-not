@@ -28,7 +28,9 @@ final class HomeViewModel: HomeViewModelProtocol {
         }
     }
     
-    var moviesToShow: [Movie] { searchText.isEmpty ? movies : searchedMovies }
+    var moviesToShow: [Movie] {
+        if offlineMode && !searchText.isEmpty { searchedMovies } else { movies }
+    }
     
     private var searchedMovies: [Movie] {
         movies.filter({ $0.titleContains(searchText) })
@@ -38,7 +40,12 @@ final class HomeViewModel: HomeViewModelProtocol {
         if isLastPage { return }
         currentPage += 1
         Task {
-            let newMovies = await loadMovies(for: sortOption, page: currentPage)
+            var newMovies = [Movie]()
+            if searchText.isEmpty {
+                newMovies = await loadMovies(for: sortOption, page: currentPage)
+            } else {
+                newMovies = await findMovies(for: searchText, page: currentPage)
+            }
             if newMovies.count == 0 { isLastPage = true } else {
                 movies.append(contentsOf: newMovies)
                 finishLoadingState()
@@ -75,8 +82,22 @@ final class HomeViewModel: HomeViewModelProtocol {
     }
     
     func findMovie(withText textToSearch: String) {
+        verifyConnection()
         searchText = textToSearch
-        if state == .loading { return } else { finishLoadingState() }
+        if textToSearch.isEmpty {
+            changeSortOption(to: sortOption)
+            return
+        }
+        if offlineMode {
+            if state == .loading { return } else { finishLoadingState() }
+        } else {
+            Task {
+                startLoadingState()
+                await Task.delay()
+                movies = await findMovies(for: textToSearch, page: 1)
+                finishLoadingState()
+            }
+        }
     }
     
     func shortInfo(for movie: Movie) -> Movie.ShortInfo {
@@ -120,6 +141,15 @@ private extension HomeViewModel {
     func loadMovies(for option: MovieList, page: Int) async -> [Movie] {
         do {
             return try await moviesAPI.loadMovies(type: option, page: page)
+        } catch let error {
+            handle(error)
+            return [ ]
+        }
+    }
+    
+    func findMovies(for text: String, page: Int) async -> [Movie] {
+        do {
+            return try await moviesAPI.searchMovies(query: text)
         } catch let error {
             handle(error)
             return [ ]
