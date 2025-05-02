@@ -1,6 +1,8 @@
 import UIKit
 
 class HomeView: UIView {
+    // CR: чи мають всі ці поля бути internal?
+    // CR: деякі можна прямо зараз зробити private, деякі ні, який паттерн тут
     private let searchBar = UISearchBar()
     private let tableView = UITableView()
     private let refreshControl = UIRefreshControl()

@@ -1,12 +1,11 @@
 import Foundation
-
 final class MovieViewModel {
     let details: MovieDetails.WithTrailer
     
     init(details: MovieDetails.WithTrailer) {
         self.details = details
     }
-    
+    // CR: чи має ця логіка бути на рівні view? наприклад уявимо що нам цей контроллер треба переробити на SwiftUI
     private var movie: MovieDetails { details.movieDetails }
     
     var trailerURLPath: String? { details.trailerPath }
@@ -38,9 +37,8 @@ final class MovieViewModel {
     }
     
     var imageURL: URL? {
-        guard let path = TMDBImageURL.buildImageURL(for: movie.posterPath, withSize: .large) else {
-            return nil
-        }
-        return URL(string: path)
+        if let path = TMDBImageURL.buildImageURL(for: movie.posterPath, withSize: .large) {
+            return URL(string: path)
+        } else { return nil }
     }
 }

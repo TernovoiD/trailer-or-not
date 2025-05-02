@@ -2,7 +2,8 @@ import UIKit
 import WebKit
 
 class TrailerViewController: UIViewController {
-    let trailerPath: String
+    // CR: чому це не private?
+    private let trailerPath: String
     private var webView = WKWebView()
 
     init(trailerPath: String) {

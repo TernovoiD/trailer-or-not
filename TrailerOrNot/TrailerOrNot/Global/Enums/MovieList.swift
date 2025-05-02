@@ -5,10 +5,6 @@ enum MovieList: String, CaseIterable {
     case upcoming = "upcoming"
     case topRated = "top_rated"
     case nowPlaying = "now_playing"
-}
-
-extension MovieList {
-    var title: String {
-        LocalizedText.movieListOption(for: self)
-    }
+    
+    // CR: чи має текст/локалізація бути присютня у моделі?
 }

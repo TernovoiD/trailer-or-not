@@ -1,6 +1,9 @@
 import Foundation
 
 struct TMDBImageURL {
+    // CR: чи найкраще це місце що б зберігати base path до зображень?
+    // CR: як ми можемо реалізувати механізм що б отримувати зображення приблизно того розміру, який нам потрібен (бо зараз 500 захардкожжено, але на маленькому екрані SE,і наприклад, на AppleTV, нам потрібні зображення різного розміру)
+    
     private static let basePath = "https://image.tmdb.org/t/p/"
 
     static func buildImageURL(for posterPath: String?, withSize screen: ScreenSize) -> String? {

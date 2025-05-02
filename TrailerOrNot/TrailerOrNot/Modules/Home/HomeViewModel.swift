@@ -11,6 +11,7 @@ final class HomeViewModel: HomeViewModelProtocol {
     
     private var movies: [Movie] = [ ]
     private var genres: [Genre] = [ ]
+    private var loadingPages = false
     private(set) var sortOption: MovieList = .popular
     private(set) var errorTitle: String?
     private(set) var errorMessage: String?
@@ -27,7 +28,7 @@ final class HomeViewModel: HomeViewModelProtocol {
             changeSortOption(to: .popular)
         }
     }
-    
+    // CR: тобто у результатах пошука ми покажемло лише локальний контент?
     var moviesToShow: [Movie] {
         if offlineMode && !searchText.isEmpty { searchedMovies } else { movies }
     }
@@ -37,8 +38,9 @@ final class HomeViewModel: HomeViewModelProtocol {
     }
     
     func loadNextPage() {
-        if isLastPage { return }
+        if isLastPage || loadingPages { return }
         currentPage += 1
+        loadingPages = true
         Task {
             var newMovies = [Movie]()
             if searchText.isEmpty {
@@ -50,6 +52,7 @@ final class HomeViewModel: HomeViewModelProtocol {
                 movies.append(contentsOf: newMovies)
                 finishLoadingState()
             }
+            loadingPages = false
         }
     }
     
@@ -60,6 +63,7 @@ final class HomeViewModel: HomeViewModelProtocol {
         sortOption = option
         Task {
             startLoadingState(refresh: refresh)
+            // CR: навіщо потрібен цей delay?
             await Task.delay()
             movies = await loadMovies(for: sortOption, page: currentPage)
             finishLoadingState()
@@ -84,6 +88,7 @@ final class HomeViewModel: HomeViewModelProtocol {
     func findMovie(withText textToSearch: String) {
         verifyConnection()
         searchText = textToSearch
+        currentPage = 1
         if textToSearch.isEmpty {
             changeSortOption(to: sortOption)
             return
@@ -149,7 +154,7 @@ private extension HomeViewModel {
     
     func findMovies(for text: String, page: Int) async -> [Movie] {
         do {
-            return try await moviesAPI.searchMovies(query: text)
+            return try await moviesAPI.searchMovies(query: text, page: page)
         } catch let error {
             handle(error)
             return [ ]
@@ -171,6 +176,7 @@ private extension HomeViewModel {
     
     func verifyConnection() {
         let isConnected = moviesAPI.isInternetAvailable()
+        // CR: виглядає дивно, враховуючи що у нас `offlineMode = !isConnected`
         if !isConnected && !offlineMode {
             showError(message: LocalizedText.Error.network)
         }
@@ -193,6 +199,7 @@ private extension HomeViewModel {
     }
     
     private func finishLoadingState() {
+        // CR: виглядає трохи заплутано, чому б не розділити встановлення стейту окремо при пощуку?
         state = moviesToShow.isEmpty ? (movies.isEmpty ? .emptyData : .emptySearch) : .ready
     }
 }

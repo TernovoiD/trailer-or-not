@@ -83,6 +83,7 @@ class TMDBService {
         } else { return nil }
     }
     
+    // CR: бажано було б реалізувати щось схоже на request provider, що б позбутись дублювання коду
     private func getData<T: Decodable>(endpoint: Endpoint, with parameters: [String: String]? = nil) async throws -> T {
         let requestParameters: [String: String] = parameters ?? ["language":"en-US"]
         let urlPath = generatePath(for: endpoint)
@@ -96,15 +97,15 @@ class TMDBService {
 
 // MARK: - Response Models
 private extension TMDBService {
-    struct MovieResponse: Codable {
+    struct MovieResponse: Decodable {
         let results: [Movie]?
     }
     
-    struct GenreResponse: Codable {
+    struct GenreResponse: Decodable {
         let genres: [Genre]?
     }
     
-    struct VideoResponse: Codable {
+    struct VideoResponse: Decodable {
         let results: [Video]?
     }
 }

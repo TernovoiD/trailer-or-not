@@ -9,7 +9,9 @@ protocol HomeViewModelProtocol {
 }
 
 class HomeTableViewManager: NSObject, UITableViewDelegate, UITableViewDataSource {
+    // CR: чи має table manager знати про конкретну view model?
     private let viewModel: HomeViewModelProtocol
+    // CR: як можна це робити без константи? уявимо що ми змінили назву файла/класа
     private let CellID = String(describing: MovieCell.self)
     var scrollAction: (() -> ())?
     
@@ -28,7 +30,7 @@ class HomeTableViewManager: NSObject, UITableViewDelegate, UITableViewDataSource
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return viewModel.moviesToShow.count
     }
-
+    // CR: який більш сучасний механізм побудови таблиці/коллекціі є у UIKit, які плюси чи мінуси?
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: CellID, for: indexPath) as? MovieCell else {
             return UITableViewCell()
@@ -36,6 +38,7 @@ class HomeTableViewManager: NSObject, UITableViewDelegate, UITableViewDataSource
 
         let movie = viewModel.moviesToShow[indexPath.row]
         cell.configure(from: viewModel.shortInfo(for: movie), onlineMode: !viewModel.offlineMode)
+        // CR: чи має `movieImageView` бути доступною поза класом? як ще це можна було б реалізувати?
         return cell
     }
 

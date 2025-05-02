@@ -1,6 +1,6 @@
 import Foundation
 
-struct Movie: Codable {
+struct Movie: Decodable {
 	let genreIDs: [Int]?
 	let id: Int?
 	let posterPath: String?
@@ -39,4 +39,6 @@ struct Movie: Codable {
         let rating: String
         let imageURL: URL?
     }
+    
+    // CR: чи має модель займатись формуванням строки для view?
 }

@@ -10,6 +10,7 @@ final class HomeViewController: UIViewController {
     private let router: MainRouter
     
     init(viewModel: HomeViewModel, router: MainRouter) {
+        // CR: виглядає так, що DI реалізован частково, на то були причини?
         self.viewModel = viewModel
         self.router = router
         self.tableManager = HomeTableViewManager(viewModel: viewModel)
@@ -38,7 +39,7 @@ final class HomeViewController: UIViewController {
         
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
-        title = MovieList.popular.title
+        title = LocalizedText.movieTitle(for: .popular)
         navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: LocalizedText.sortButtonText, style: .plain, target: self, action: #selector(showOptions))
         
@@ -99,6 +100,7 @@ final class HomeViewController: UIViewController {
         }
     }
     
+    // CR: чи має ця логіка бути на рівні view?
     private func updateTable() {
         let page = viewModel.currentPage
         if page >= 2 { homeView.table.reloadData() } else {
@@ -135,9 +137,10 @@ final class HomeViewController: UIViewController {
         let actionSheet = UIAlertController(title: LocalizedText.sortTitle, message: LocalizedText.sortDescription, preferredStyle: .actionSheet)
         
         for option in MovieList.allCases {
-            let action = UIAlertAction(title: option.title, style: .default) { _ in
+            let title = LocalizedText.movieTitle(for: option)
+            let action = UIAlertAction(title: title, style: .default) { _ in
                 self.viewModel.changeSortOption(to: option)
-                self.title = option.title
+                self.title = title
                 self.scrollUP()
             }
             if option == viewModel.sortOption {

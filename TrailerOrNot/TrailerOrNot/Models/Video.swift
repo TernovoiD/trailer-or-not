@@ -1,6 +1,6 @@
 import Foundation
 
-struct Video: Codable {
+struct Video: Decodable {
 	let key: String?
     let site: String?
 	let type: String?
