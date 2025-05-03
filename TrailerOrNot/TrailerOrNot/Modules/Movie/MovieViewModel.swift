@@ -6,25 +6,20 @@ final class MovieViewModel {
         self.details = details
     }
     // CR: чи має ця логіка бути на рівні view? наприклад уявимо що нам цей контроллер треба переробити на SwiftUI
+    // Створив окремий MovieViewModel яка обробляє всі необхідні дані для View в зручний формат
     private var movie: MovieDetails { details.movieDetails }
     
     var trailerURLPath: String? { details.trailerPath }
     
-    var hasTrailer: Bool {
-        trailerURLPath != "" && trailerURLPath != nil
-    }
+    var hasTrailer: Bool { trailerURLPath != "" && trailerURLPath != nil }
     
-    var title: String {
-        details.movieDetails.title ?? ""
-    }
+    var title: String { details.movieDetails.title ?? "" }
     
     var countryAndYear: String {
         "\(movie.originCountry?.first ?? "Unknown Country"), \(movie.releaseDate?.prefix(4) ?? "Unknown Year")"
     }
     
-    var rating: String {
-        "Rating: \(String(format: "%.1f", movie.rating ?? 0))"
-    }
+    var rating: String { "Rating: \(String(format: "%.1f", movie.rating ?? 0))" }
     
     var overview: String { movie.overview ?? "" }
     

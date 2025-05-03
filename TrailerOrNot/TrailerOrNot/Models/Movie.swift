@@ -41,4 +41,5 @@ struct Movie: Decodable {
     }
     
     // CR: чи має модель займатись формуванням строки для view?
+    // Переніс логіку в HomeViewModel
 }

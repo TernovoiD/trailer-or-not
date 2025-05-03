@@ -5,6 +5,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
 
     // CR: чи можна побачити якусь простоу реалізацію DI/Module/Assembly?
+    // Відтепер потрібні модулі можуть бути створені в ModuleBuilder
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         window = UIWindow(windowScene: windowScene)
@@ -13,8 +14,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.rootViewController = navigationController
         window?.makeKeyAndVisible()
         
-        let container = AppContainer(navigationController: navigationController)
-        let homeVC = container.makeHomeViewController()
+        let modules = ModuleBuilder(with: navigationController)
+        let homeVC = modules.homeViewController()
+        
         navigationController.viewControllers = [homeVC]
     }
 

@@ -2,6 +2,7 @@ import UIKit
 import Kingfisher
 
 final class MovieCell: UITableViewCell {
+    static let reuseIdentifier = "MovieCell"
     private let movieImageView = UIImageView()
     private let cellBackground = UIView()
     private let tintView = UIView()
@@ -89,6 +90,7 @@ final class MovieCell: UITableViewCell {
     }
     
     // CR: як краще зробити рефакторінг сигнатури цієї функції? уявимо у нас було б 10 парамтерів
+    // Створив Movie.ShortInfo - модель, яка обєднує потрібні дані
     func configure(from info: Movie.ShortInfo, onlineMode: Bool) {
         titleLabel.text = info.title
         genreLabel.text = info.genres
@@ -97,6 +99,7 @@ final class MovieCell: UITableViewCell {
         if let url = info.imageURL {
             let options: KingfisherOptionsInfo = onlineMode == true ? [] : [.onlyFromCache]
             // CR: UIImage(named: "placeholder") - які є варіанти менеджмента ресурсів, що б це не був хардкод назви
+            // Створив ImageAssets файл для зберігання назв стандартних малюнків
             movieImageView.kf.setImage(with: url, placeholder: UIImage(named: ImageAssets.placeholder), options: options)
         }
     }

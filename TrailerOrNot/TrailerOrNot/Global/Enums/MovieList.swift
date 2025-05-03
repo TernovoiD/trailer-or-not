@@ -7,4 +7,6 @@ enum MovieList: String, CaseIterable {
     case nowPlaying = "now_playing"
     
     // CR: чи має текст/локалізація бути присютня у моделі?
+    // Переніс в LocalizedText.movieTitle(for: MovieList)
+    
 }

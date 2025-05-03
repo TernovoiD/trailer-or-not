@@ -1,6 +1,6 @@
 import UIKit
 
-class HomeSearchBarManager: NSObject, UISearchBarDelegate {
+final class HomeSearchBarManager: NSObject, UISearchBarDelegate {
     private let viewModel: HomeViewModel
     private var searchTimer: Timer?
     

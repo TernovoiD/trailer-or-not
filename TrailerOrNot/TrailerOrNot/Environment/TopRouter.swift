@@ -1,6 +1,6 @@
 import UIKit
 
-class MainRouter {
+final class TopRouter {
     weak var navigationController: UINavigationController?
 
     init(navigationController: UINavigationController) {
@@ -11,7 +11,7 @@ class MainRouter {
         let detailsVC = MovieViewController(details: movieDetails)
         navigationController?.pushViewController(detailsVC, animated: true)
     }
-    // CR: так само і відображення Алертів мав би робити роутер 
+    // CR: так само і відображення Алертів мав би робити роутер
     func showErrorAlert(title: String, message: String) {
         guard let topVC = navigationController?.topViewController else { return }
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)

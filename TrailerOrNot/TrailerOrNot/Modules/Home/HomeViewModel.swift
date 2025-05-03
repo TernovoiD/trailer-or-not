@@ -29,6 +29,7 @@ final class HomeViewModel: HomeViewModelProtocol {
         }
     }
     // CR: тобто у результатах пошука ми покажемло лише локальний контент?
+    // Тепер, при наявності інтернету, ми робимо мережевий запит на пошук фільмів
     var moviesToShow: [Movie] {
         if offlineMode && !searchText.isEmpty { searchedMovies } else { movies }
     }
@@ -61,9 +62,11 @@ final class HomeViewModel: HomeViewModelProtocol {
         currentPage = 1
         isLastPage = false
         sortOption = option
+        if !searchText.isEmpty { return }
         Task {
             startLoadingState(refresh: refresh)
             // CR: навіщо потрібен цей delay?
+            // API завантаєує дані миттєво, тому користувач ніколи не побачить анімації підвантаження (що було умовою в ТЗ). Можливо правильніше зробити невелику зупинку перед тим як змінювати State, або на рівні ViewController, коли він бачить зміну State. Але це може ускладнити сам Controller і його читабельність.
             await Task.delay()
             movies = await loadMovies(for: sortOption, page: currentPage)
             finishLoadingState()
@@ -177,6 +180,7 @@ private extension HomeViewModel {
     func verifyConnection() {
         let isConnected = moviesAPI.isInternetAvailable()
         // CR: виглядає дивно, враховуючи що у нас `offlineMode = !isConnected`
+        // Це запобіжник, щоб error був показаний лише один раз, коли ми переходимо з online -> offline. Інакше він буде кожен раз при пагінації (при тому що дані все одно надходять з кеша)
         if !isConnected && !offlineMode {
             showError(message: LocalizedText.Error.network)
         }
@@ -200,6 +204,8 @@ private extension HomeViewModel {
     
     private func finishLoadingState() {
         // CR: виглядає трохи заплутано, чому б не розділити встановлення стейту окремо при пощуку?
+        // Мається на увазі рефакторинг метода для читабельності, чи інший підхід в визначенні State?
+        // Наш HomeView починає мати багато станів: пошук(онлайн/оффлайн, пустий/повний), сортування (пусте/повне). Прорахувати кінцевий State післе методів стає дедалі важче і стають можливі неочікувані комбінації. Тому я вирішив тримати логіку вирішення кінцевого State централізовано. Потенційно, вона має вирости в цілий окремий механізм.
         state = moviesToShow.isEmpty ? (movies.isEmpty ? .emptyData : .emptySearch) : .ready
     }
 }

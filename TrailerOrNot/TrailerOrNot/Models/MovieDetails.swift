@@ -39,4 +39,5 @@ struct MovieDetails: Decodable {
     }
     
     // CR: чи має модель займатись формуванням строки для view?
+    // Створив MovieViewModel і переніс логіку туди
 }
