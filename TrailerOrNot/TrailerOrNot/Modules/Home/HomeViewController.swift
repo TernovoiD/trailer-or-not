@@ -1,19 +1,28 @@
 import UIKit
 import Combine
 
+struct HomeModuleDependencies {
+    let viewModel: HomeViewModel
+    let router: TopRouter
+    let tableManager: HomeTableViewManager
+    let searchBarManager: HomeSearchBarManager
+}
+
 final class HomeViewController: UIViewController {
     private var subscriptions = Set<AnyCancellable>()
     private var viewModel: HomeViewModel
     private let homeView = HomeView()
     private let tableManager: HomeTableViewManager
     private let searchBarManager: HomeSearchBarManager
-    private let router: MainRouter
+    private let router: TopRouter
     
-    init(viewModel: HomeViewModel, router: MainRouter) {
-        self.viewModel = viewModel
-        self.router = router
-        self.tableManager = HomeTableViewManager(viewModel: viewModel)
-        self.searchBarManager = HomeSearchBarManager(viewModel: viewModel)
+    init(with dependencies: HomeModuleDependencies) {
+        // CR: виглядає так, що DI реалізован частково, на то були причини?
+        // Всі необхідні модулі тепер передаються ззовні
+        self.viewModel = dependencies.viewModel
+        self.router = dependencies.router
+        self.tableManager = dependencies.tableManager
+        self.searchBarManager = dependencies.searchBarManager
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -32,13 +41,13 @@ final class HomeViewController: UIViewController {
         view.backgroundColor = .systemBackground
         homeView.setupWith(tableManager: tableManager, searchBarManager: searchBarManager)
         tableManager.scrollAction = paginationCheck
-        homeView.refresh.addTarget(self, action: #selector(refreshData), for: .valueChanged)
+        homeView.refreshControl.addTarget(self, action: #selector(refreshData), for: .valueChanged)
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
-        title = MovieList.popular.title
+        title = LocalizedText.movieTitle(for: .popular)
         navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: LocalizedText.sortButtonText, style: .plain, target: self, action: #selector(showOptions))
         
@@ -48,7 +57,7 @@ final class HomeViewController: UIViewController {
         viewModel.$searchText
             .receive(on: DispatchQueue.main)
             .sink { [weak self] movies in
-                self?.homeView.table.reloadData()
+                self?.homeView.tableView.reloadData()
             }
             .store(in: &subscriptions)
         
@@ -85,34 +94,36 @@ final class HomeViewController: UIViewController {
             updateTable()
             homeView.loadingUI(false)
             homeView.showTable()
-            homeView.refresh.endRefreshing()
+            homeView.refreshControl.endRefreshing()
         case .emptyData:
             homeView.loadingUI(false)
             updateTable()
             homeView.showEmptySign(with: LocalizedText.Error.emptyData)
-            homeView.refresh.endRefreshing()
+            homeView.refreshControl.endRefreshing()
         case .emptySearch:
             homeView.loadingUI(false)
             updateTable()
             homeView.showEmptySign(with: LocalizedText.Error.emptySearch)
-            homeView.refresh.endRefreshing()
+            homeView.refreshControl.endRefreshing()
         }
     }
     
+    // CR: чи має ця логіка бути на рівні view?
+    // Забрав цю логіку з View до контроллера
     private func updateTable() {
         let page = viewModel.currentPage
-        if page >= 2 { homeView.table.reloadData() } else {
-            UIView.transition(with: homeView.table, duration: 0.3, options: .transitionCrossDissolve, animations: {
-                self.homeView.table.reloadData()
+        if page >= 2 { homeView.tableView.reloadData() } else {
+            UIView.transition(with: homeView.tableView, duration: 0.3, options: .transitionCrossDissolve, animations: {
+                self.homeView.tableView.reloadData()
             }, completion: nil)
         }
     }
     
     private func paginationCheck() {
         dismissKeyboard()
-        let visibleCells = homeView.table.visibleCells
+        let visibleCells = homeView.tableView.visibleCells
         guard let lastVisibleCell = visibleCells.last else { return }
-        let lastIndexPath = homeView.table.indexPath(for: lastVisibleCell)
+        let lastIndexPath = homeView.tableView.indexPath(for: lastVisibleCell)
         if let lastIndexPath,
            lastIndexPath.row >= viewModel.moviesToShow.count - 10 { viewModel.loadNextPage() }
     }
@@ -135,9 +146,10 @@ final class HomeViewController: UIViewController {
         let actionSheet = UIAlertController(title: LocalizedText.sortTitle, message: LocalizedText.sortDescription, preferredStyle: .actionSheet)
         
         for option in MovieList.allCases {
-            let action = UIAlertAction(title: option.title, style: .default) { _ in
+            let title = LocalizedText.movieTitle(for: option)
+            let action = UIAlertAction(title: title, style: .default) { _ in
                 self.viewModel.changeSortOption(to: option)
-                self.title = option.title
+                self.title = title
                 self.scrollUP()
             }
             if option == viewModel.sortOption {
@@ -151,13 +163,13 @@ final class HomeViewController: UIViewController {
     }
     
     private func scrollUP() {
-        if homeView.table.numberOfRows(inSection: 0) > 0 {
+        if homeView.tableView.numberOfRows(inSection: 0) > 0 {
             let indexPath = IndexPath(row: 0, section: 0)
-            homeView.table.scrollToRow(at: indexPath, at: .top, animated: true)
+            homeView.tableView.scrollToRow(at: indexPath, at: .top, animated: true)
         }
     }
     
     @objc private func dismissKeyboard() {
-        homeView.search.resignFirstResponder()
+        homeView.searchBar.resignFirstResponder()
     }
 }

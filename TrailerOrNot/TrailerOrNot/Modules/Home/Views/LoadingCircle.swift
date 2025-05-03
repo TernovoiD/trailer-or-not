@@ -1,6 +1,6 @@
 import UIKit
 
-class LoadingCircle: UIView {
+final class LoadingCircle: UIView {
     private let containerView = UIView()
     private let loadingIndicator = UIActivityIndicatorView(style: .large)
     

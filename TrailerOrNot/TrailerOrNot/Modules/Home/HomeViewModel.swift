@@ -11,6 +11,7 @@ final class HomeViewModel: HomeViewModelProtocol {
     
     private var movies: [Movie] = [ ]
     private var genres: [Genre] = [ ]
+    private var loadingPages = false
     private(set) var sortOption: MovieList = .popular
     private(set) var errorTitle: String?
     private(set) var errorMessage: String?
@@ -27,7 +28,8 @@ final class HomeViewModel: HomeViewModelProtocol {
             changeSortOption(to: .popular)
         }
     }
-    
+    // CR: тобто у результатах пошука ми покажемло лише локальний контент?
+    // Тепер, при наявності інтернету, ми робимо мережевий запит на пошук фільмів
     var moviesToShow: [Movie] {
         if offlineMode && !searchText.isEmpty { searchedMovies } else { movies }
     }
@@ -37,8 +39,9 @@ final class HomeViewModel: HomeViewModelProtocol {
     }
     
     func loadNextPage() {
-        if isLastPage { return }
+        if isLastPage || loadingPages { return }
         currentPage += 1
+        loadingPages = true
         Task {
             var newMovies = [Movie]()
             if searchText.isEmpty {
@@ -50,6 +53,7 @@ final class HomeViewModel: HomeViewModelProtocol {
                 movies.append(contentsOf: newMovies)
                 finishLoadingState()
             }
+            loadingPages = false
         }
     }
     
@@ -58,8 +62,11 @@ final class HomeViewModel: HomeViewModelProtocol {
         currentPage = 1
         isLastPage = false
         sortOption = option
+        if !searchText.isEmpty { return }
         Task {
             startLoadingState(refresh: refresh)
+            // CR: навіщо потрібен цей delay?
+            // API завантаєує дані миттєво, тому користувач ніколи не побачить анімації підвантаження (що було умовою в ТЗ). Можливо правильніше зробити невелику зупинку перед тим як змінювати State, або на рівні ViewController, коли він бачить зміну State. Але це може ускладнити сам Controller і його читабельність.
             await Task.delay()
             movies = await loadMovies(for: sortOption, page: currentPage)
             finishLoadingState()
@@ -84,6 +91,7 @@ final class HomeViewModel: HomeViewModelProtocol {
     func findMovie(withText textToSearch: String) {
         verifyConnection()
         searchText = textToSearch
+        currentPage = 1
         if textToSearch.isEmpty {
             changeSortOption(to: sortOption)
             return
@@ -149,7 +157,7 @@ private extension HomeViewModel {
     
     func findMovies(for text: String, page: Int) async -> [Movie] {
         do {
-            return try await moviesAPI.searchMovies(query: text)
+            return try await moviesAPI.searchMovies(query: text, page: page)
         } catch let error {
             handle(error)
             return [ ]
@@ -171,6 +179,8 @@ private extension HomeViewModel {
     
     func verifyConnection() {
         let isConnected = moviesAPI.isInternetAvailable()
+        // CR: виглядає дивно, враховуючи що у нас `offlineMode = !isConnected`
+        // Це запобіжник, щоб error був показаний лише один раз, коли ми переходимо з online -> offline. Інакше він буде кожен раз при пагінації (при тому що дані все одно надходять з кеша)
         if !isConnected && !offlineMode {
             showError(message: LocalizedText.Error.network)
         }
@@ -193,6 +203,9 @@ private extension HomeViewModel {
     }
     
     private func finishLoadingState() {
+        // CR: виглядає трохи заплутано, чому б не розділити встановлення стейту окремо при пощуку?
+        // Мається на увазі рефакторинг метода для читабельності, чи інший підхід в визначенні State?
+        // Наш HomeView починає мати багато станів: пошук(онлайн/оффлайн, пустий/повний), сортування (пусте/повне). Прорахувати кінцевий State післе методів стає дедалі важче і стають можливі неочікувані комбінації. Тому я вирішив тримати логіку вирішення кінцевого State централізовано. Потенційно, вона має вирости в цілий окремий механізм.
         state = moviesToShow.isEmpty ? (movies.isEmpty ? .emptyData : .emptySearch) : .ready
     }
 }

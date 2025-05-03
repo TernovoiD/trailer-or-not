@@ -1,6 +1,7 @@
 import Foundation
 
 // CR: наскільки безпечно тримати так токен? які ще є варіанти?
+// KeyChain якщо токен надходить з бекенду, .ENV файл якщо токен статичний
 struct Secret {
     static let readAccessTokenTMDB = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwMjJhMWRiZTczOGU5MDc5NThmOTFmMDYxNDgyZDlkNCIsIm5iZiI6MTc0NDI4OTc2My40NTEsInN1YiI6IjY3ZjdiZmUzZDgxNzQ4Y2NmZjk5NTUyZCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ._BheP_l4wyjoE5Tzb7eqxvg9huCDpPUyjuw1mHJ76Cc"
 }

@@ -8,9 +8,12 @@ protocol HomeViewModelProtocol {
     func openMovie(withID id: Int)
 }
 
-class HomeTableViewManager: NSObject, UITableViewDelegate, UITableViewDataSource {
+final class HomeTableViewManager: NSObject, UITableViewDelegate, UITableViewDataSource {
+    // CR: чи має table manager знати про конкретну view model?
+    // Створив протокол з умовною ViewModel. Можливий ще варіант з Delegate?
     private let viewModel: HomeViewModelProtocol
-    private let CellID = String(describing: MovieCell.self)
+    // CR: як можна це робити без константи? уявимо що ми змінили назву файла/класа
+    // Додав MovieCell.reuseIdentifier
     var scrollAction: (() -> ())?
     
     init(viewModel: HomeViewModelProtocol) {
@@ -20,7 +23,7 @@ class HomeTableViewManager: NSObject, UITableViewDelegate, UITableViewDataSource
     func configureTableView(_ tableView: UITableView) {
         tableView.delegate = self
         tableView.dataSource = self
-        tableView.register(MovieCell.self, forCellReuseIdentifier: CellID)
+        tableView.register(MovieCell.self, forCellReuseIdentifier: MovieCell.reuseIdentifier)
         tableView.separatorStyle = .none
         tableView.rowHeight = 240
     }
@@ -28,14 +31,17 @@ class HomeTableViewManager: NSObject, UITableViewDelegate, UITableViewDataSource
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return viewModel.moviesToShow.count
     }
-
+    // CR: який більш сучасний механізм побудови таблиці/коллекціі є у UIKit, які плюси чи мінуси?
+    // UICollectionView з Compositional Layout. Сучасний і більш гнучкий варінт, має набагато більші можливості в кастомізації. Трохи важчий в початковому налаштуванні.
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: CellID, for: indexPath) as? MovieCell else {
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: MovieCell.reuseIdentifier, for: indexPath) as? MovieCell else {
             return UITableViewCell()
         }
 
         let movie = viewModel.moviesToShow[indexPath.row]
         cell.configure(from: viewModel.shortInfo(for: movie), onlineMode: !viewModel.offlineMode)
+        // CR: чи має `movieImageView` бути доступною поза класом? як ще це можна було б реалізувати?
+        // Переніс логіку в саму Cell
         return cell
     }
 

@@ -1,15 +1,15 @@
 import UIKit
 
-class HomeView: UIView {
-    private let searchBar = UISearchBar()
-    private let tableView = UITableView()
-    private let refreshControl = UIRefreshControl()
+final class HomeView: UIView {
+    // CR: чи мають всі ці поля бути internal?
+    // CR: деякі можна прямо зараз зробити private, деякі ні, який паттерн тут порушується
+    // Тепер ми можемо читати та використовувати методи, але не зможемо цілком переназначити компонент
+    // Це має покращити інкапсуляцію
+    public private(set) var searchBar = UISearchBar()
+    public private(set) var tableView = UITableView()
+    public private(set) var refreshControl = UIRefreshControl()
     private let emptyDataLabel = UILabel()
     private let loadingIndicator = LoadingCircle()
-    
-    var search: UISearchBar { searchBar }
-    var table: UITableView { tableView }
-    var refresh: UIRefreshControl { refreshControl }
  
     override init(frame: CGRect) {
         super.init(frame: frame)

@@ -1,7 +1,7 @@
 import Foundation
 import Alamofire
 
-class TMDBService {
+final class TMDBService {
     private let baseURL = "https://api.themoviedb.org/3"
     private let languageParameter = ["language":"en-US"]
     private let headers: HTTPHeaders = [
@@ -83,9 +83,12 @@ class TMDBService {
         } else { return nil }
     }
     
+    // CR: бажано було б реалізувати щось схоже на request provider, що б позбутись дублювання коду
+    // Зробив generic метод для всіх запитів. При появі додаткових PUT, POST запитів або параметрів або API, цей метод стане основою для окремого класу.
     private func getData<T: Decodable>(endpoint: Endpoint, with parameters: [String: String]? = nil) async throws -> T {
         let requestParameters: [String: String] = parameters ?? ["language":"en-US"]
         let urlPath = generatePath(for: endpoint)
+        print(urlPath)
         return try await AF.request(urlPath, method: .get, parameters: requestParameters, headers: headers)
                     .validate()
                     .serializingDecodable(T.self)
@@ -96,15 +99,15 @@ class TMDBService {
 
 // MARK: - Response Models
 private extension TMDBService {
-    struct MovieResponse: Codable {
+    struct MovieResponse: Decodable {
         let results: [Movie]?
     }
     
-    struct GenreResponse: Codable {
+    struct GenreResponse: Decodable {
         let genres: [Genre]?
     }
     
-    struct VideoResponse: Codable {
+    struct VideoResponse: Decodable {
         let results: [Video]?
     }
 }

@@ -1,6 +1,6 @@
 import UIKit
 
-class PosterViewController: UIViewController, UIScrollViewDelegate {
+final class PosterViewController: UIViewController, UIScrollViewDelegate {
 
     private let imageView = UIImageView()
     private let scrollView = UIScrollView()
